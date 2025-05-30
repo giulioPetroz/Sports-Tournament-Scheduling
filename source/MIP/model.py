@@ -7,12 +7,14 @@ weeks = range(n - 1)  # Week identifiers
 slots = range(n)  # Slots go from 0 to n - 1 (periods implied by slot ids)
 periods = range(n // 2)
 
-prob = LpProblem("STS problem")
+prob = LpProblem("STS problem", LpMinimize)
 
+# Decision variables
 x = LpVariable.dicts(
     "X", indices=(teams, weeks, slots), cat="Binary"
 )  # x[i][j][k] = 1 if team i plays in slot k in week j, 0 otherwise
 
+# Auxiliary variables
 b = LpVariable.dicts(
     "B", indices=(teams, teams, weeks, periods), cat="Binary"
 )  # b[i][j][k][m] = 1 if i plays j in week k and period m, i at home while j away
@@ -29,6 +31,30 @@ for t1 in teams:
                 prob += x[t1][w][p * 2] + x[t2][w][p * 2 + 1] <= b[t1][t2][w][p] + 1
                 prob += b[t1][t2][w][p] <= x[t1][w][p * 2]
                 prob += b[t1][t2][w][p] <= x[t2][w][p * 2 + 1]
+
+
+team_unbalance = LpVariable.dicts(
+    "Unbalance", teams, lowBound=1, cat="Integer"
+)  # team_unbalance[t] > 0 if more home or more away games, = 0 for balance
+
+team_home_games = {}
+team_away_games = {}
+for t1 in teams:
+    team_home_games[t1] = lpSum(
+        [b[t1][t2][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
+    )
+    team_away_games[t1] = lpSum(
+        [b[t2][t1][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
+    )
+
+for t in teams:
+    # Because the problem is a minimization problem imposing team_unbalance[t] >= max{-x, x} is equivalent to computing abs(x)
+    prob += team_unbalance[t] >= team_home_games[t] - team_away_games[t]
+    prob += team_unbalance[t] >= team_away_games[t] - team_home_games[t]
+
+# Objective function
+prob += lpSum([team_unbalance[t] for t in teams])
+
 
 # Every team plays once a week
 for t in teams:
@@ -64,3 +90,5 @@ print("Status:", LpStatus[prob.status])
 for v in prob.variables():
     if v.varValue == 1:
         print(v.name)
+
+print(f"Objective value: {prob.objective}")
