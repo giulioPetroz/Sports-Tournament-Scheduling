@@ -83,12 +83,14 @@ for t in teams:
 # Objective function: sum of imbalance score of each team
 prob += lpSum([team_imbalance[t] for t in teams])
 
-
+# Solve problem
 prob.solve()
+
+# Solution output
 print("Status:", LpStatus[prob.status])
-
-for v in prob.variables():
-    if v.varValue == 1:
-        print(v.name)
-
-print(f"Objective value: {prob.objective}")
+print(f"Objective value: {value(prob.objective)}")
+for w in weeks:
+    for s in slots:
+        for t in teams:
+            if value(x[t][w][s]) == 1:
+                print(f"Team {t} in week {w} plays in slot {s}")
