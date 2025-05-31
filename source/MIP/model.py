@@ -10,8 +10,8 @@ parser.add_argument(
     "--solvers",
     nargs="+",
     type=str,
-    default=["cbc"],
-    choices=["cbc"],
+    default=["CBC"],
+    choices=["CBC"],
     help="Solvers chosen to solve instance",
 )
 parser.add_argument(
@@ -31,12 +31,31 @@ weeks = range(n - 1)  # Week identifiers
 slots = range(n)  # Slots go from 0 to n - 1 (periods implied by slot ids)
 periods = range(n // 2)  # Period identifiers
 
+
+def format_schedule(x):
+    schedule = []
+    for p in periods:
+        period_matchups = []
+        for w in weeks:
+            matchup = []
+            for t in teams:
+                if value(x[t][w][p * 2]) == 1:  # t plays at home in week w period p
+                    matchup.insert(0, t + 1)
+                elif value(x[t][w][p * 2 + 1]) == 1:
+                    matchup.append(t + 1)
+            period_matchups.append(matchup)
+
+        schedule.append(period_matchups)
+
+    return schedule
+
+
 result = {}  # stores result for each solver
 
 for solver_id in solvers:
     # Selecting solver
     match solver_id:
-        case "cbc":
+        case "CBC":
             solver = PULP_CBC_CMD(timeLimit=timeout)
 
     # Model
@@ -138,14 +157,14 @@ for solver_id in solvers:
                 "time": int(end - start),
                 "optimal": True,
                 "obj": value(prob.objective),
-                "sol": b,
+                "sol": format_schedule(x),
             }
         case "Not optimal":  # No optimality guarantee
             result[solver_id] = {
                 "time": timeout,
                 "optimal": False,
                 "obj": value(prob.objective),
-                "sol": b,
+                "sol": format_schedule(x),
             }
         case "Not Solved":  # Timed out before finding a solution
             result[solver_id] = {
