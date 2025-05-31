@@ -32,30 +32,6 @@ for t1 in teams:
                 prob += b[t1][t2][w][p] <= x[t1][w][p * 2]
                 prob += b[t1][t2][w][p] <= x[t2][w][p * 2 + 1]
 
-
-team_unbalance = LpVariable.dicts(
-    "Unbalance", teams, lowBound=1, cat="Integer"
-)  # team_unbalance[t] > 0 if more home or more away games, = 0 for balance
-
-team_home_games = {}
-team_away_games = {}
-for t1 in teams:
-    team_home_games[t1] = lpSum(
-        [b[t1][t2][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
-    )
-    team_away_games[t1] = lpSum(
-        [b[t2][t1][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
-    )
-
-for t in teams:
-    # Because the problem is a minimization problem imposing team_unbalance[t] >= max{-x, x} is equivalent to computing abs(x)
-    prob += team_unbalance[t] >= team_home_games[t] - team_away_games[t]
-    prob += team_unbalance[t] >= team_away_games[t] - team_home_games[t]
-
-# Objective function
-prob += lpSum([team_unbalance[t] for t in teams])
-
-
 # Every team plays once a week
 for t in teams:
     for w in weeks:
@@ -82,6 +58,30 @@ for t1 in teams:
 for t in teams:
     for p in periods:  # Periods
         prob += lpSum([x[t][w][s] for w in weeks for s in (p * 2, p * 2 + 1)]) <= 2
+
+
+# Team imbalance score
+team_imbalance = LpVariable.dicts(
+    "Imbalance", teams, lowBound=1, cat="Integer"
+)  # team_imbalance[t] > 0 if t plays more at home or more away, = 0 for balance
+
+team_home_games = {}  # team_home_games[t]: how many games t plays at home
+team_away_games = {}  # team_away_games[t]: how many games t plays away
+for t1 in teams:
+    team_home_games[t1] = lpSum(
+        [b[t1][t2][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
+    )
+    team_away_games[t1] = lpSum(
+        [b[t2][t1][w][p] for t2 in teams if t2 != t1 for w in weeks for p in periods]
+    )
+
+for t in teams:
+    # Because the problem is a minimization problem imposing team_imbalance[t] >= max{-x, x} is equivalent to computing abs(x)
+    prob += team_imbalance[t] >= team_home_games[t] - team_away_games[t]
+    prob += team_imbalance[t] >= team_away_games[t] - team_home_games[t]
+
+# Objective function: sum of imbalance score of each team
+prob += lpSum([team_imbalance[t] for t in teams])
 
 
 prob.solve()
