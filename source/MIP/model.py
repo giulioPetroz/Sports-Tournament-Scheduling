@@ -1,11 +1,11 @@
 from pulp import *
 
-n = 6  # Number of teams
+n = 10  # Number of teams
 
 teams = range(n)  # Both team and weekly slots identifiers
 weeks = range(n - 1)  # Week identifiers
 slots = range(n)  # Slots go from 0 to n - 1 (periods implied by slot ids)
-periods = range(n // 2)
+periods = range(n // 2)  # Period identifiers
 
 prob = LpProblem("STS problem", LpMinimize)
 
@@ -62,7 +62,7 @@ for t in teams:
 
 # Team imbalance score
 team_imbalance = LpVariable.dicts(
-    "Imbalance", teams, lowBound=1, cat="Integer"
+    "Imbalance", teams, lowBound=1, upBound=n - 1, cat="Integer"
 )  # team_imbalance[t] > 0 if t plays more at home or more away, = 0 for balance
 
 team_home_games = {}  # team_home_games[t]: how many games t plays at home
