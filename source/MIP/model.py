@@ -1,12 +1,37 @@
 from pulp import *
+import argparse
+from timeit import default_timer as timer
+import json
 
-n = 10  # Number of teams
+# Command line parameters
+parser = argparse.ArgumentParser(description="STS with MIP")
+parser.add_argument("-n", "--teams", type=int, help="Number of teams")
+parser.add_argument(
+    "--solver", type=str, default="cbc", choices=["cbc"], help="Solver choice"
+)
+parser.add_argument(
+    "-t", "--timeout", type=int, default=300, help="Solver timeout in seconds"
+)
+parser.add_argument("--id", type=str, help="Instance id")
+
+args = parser.parse_args()
+
+n = args.teams  # number of teams
+solver_id = args.solver  # Solver id
+timeout = args.timeout  # Solver timeout
+instance_id = args.id  # Instance id
 
 teams = range(n)  # Both team and weekly slots identifiers
 weeks = range(n - 1)  # Week identifiers
 slots = range(n)  # Slots go from 0 to n - 1 (periods implied by slot ids)
 periods = range(n // 2)  # Period identifiers
 
+# Selecting solver
+match solver_id:
+    case "cbc":
+        solver = PULP_CBC_CMD(timeLimit=timeout)
+
+# Model
 prob = LpProblem("STS problem", LpMinimize)
 
 # Decision variables
@@ -84,10 +109,26 @@ for t in teams:
 prob += lpSum([team_imbalance[t] for t in teams])
 
 # Solve problem
-prob.solve()
+start = timer()
+prob.solve(solver)
+end = timer()
+
 
 # Solution output
-print("Status:", LpStatus[prob.status])
+match LpStatus[prob.status]:
+    case "Optimal":  # Found optimal solution
+        pass
+    case "Not optimal":
+        # Found a solution but is not optimal
+        pass
+    case "Not Solved":
+        # Timed out before finding a solution
+        pass
+    case "Infeasible":
+        pass
+    case "Unbounded":
+        pass
+
 print(f"Objective value: {value(prob.objective)}")
 for w in weeks:
     for s in slots:
