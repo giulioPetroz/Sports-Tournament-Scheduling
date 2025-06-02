@@ -1,0 +1,22 @@
+{
+  "timestamp": "20250601_201001",
+  "solver": "gecode",
+  "n_values": [
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "timeout": 300,
+  "template_file": "template_model_test.mzn",
+  "results": {
+    "12_everything": {
+      "6": 0.22518706321716309,
+      "8": 0.3798978328704834,
+      "10": 4.5801708698272705,
+      "12": "TIMEOUT",
+      "14": "SKIP"
+    }
+  }
+}

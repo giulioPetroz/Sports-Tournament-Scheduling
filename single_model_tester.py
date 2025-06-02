@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 import os
 
 def run_benchmark():
-    model_file = "cp/model_basic_sb.mzn"
+    model_file = "cp/best_model.mzn"
     solvers = ["gecode", "chuffed", "or-tools"] 
     instances = [4, 6, 8, 10, 12, 14, 16]  
-    time_limit = 300 
+    time_limit = 300
     
     results = []
     status = "UNKNOWN"  # Track status across runs
@@ -34,10 +34,18 @@ def run_benchmark():
         try:
             solver = minizinc.Solver.lookup(solver_name)
             print(f"\n=== Testing with {solver_name} ===")
-        
+
             for n in instances:
                 print(f"Running n={n}...")
                 
+                if solver_name == "gecode" and n > 12:
+                    print(f"  {solver_name}, n={n}: Skipping due to Gecode's instance limit.")
+                    continue
+                
+                if solver_name == "chuffed" and n > 14:
+                    print(f'Skip chuffed for n={n} due to known performance issues.')
+                    continue
+
                 if status == "TIMEOUT":
                     print(f"  {solver_name}, n={n}: Skipping due to previous timeout.")
                     continue
