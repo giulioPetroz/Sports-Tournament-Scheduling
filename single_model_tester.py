@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 import os
 
 def run_benchmark():
-    model_file = "cp/best_model.mzn"
+    model_file = "cp_zeynep_inspired/paper_zeynep_basic_implementation_gecode.mzn"
     solvers = ["gecode", "chuffed", "or-tools"] 
-    instances = [4, 6, 8, 10, 12, 14, 16]  
+    instances = [4, 6, 8, 10, 12, 14, 16, 18, 20]  
     time_limit = 300
     
     results = []
@@ -38,11 +38,11 @@ def run_benchmark():
             for n in instances:
                 print(f"Running n={n}...")
                 
-                if solver_name == "gecode" and n > 12:
+                if solver_name == "gecode" and n > 20:
                     print(f"  {solver_name}, n={n}: Skipping due to Gecode's instance limit.")
                     continue
                 
-                if solver_name == "chuffed" and n > 14:
+                if solver_name == "chuffed" and n > 16:
                     print(f'Skip chuffed for n={n} due to known performance issues.')
                     continue
 

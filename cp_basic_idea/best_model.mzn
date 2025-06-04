@@ -43,6 +43,7 @@ constraint forall(j in Weeks)(
     alldifferent([T[i,j] | i in Teams])
 );
 
+
 % IMPLIED CONSTRAINTS 
 % Exactly 2 teams per period per week
 constraint forall(wk_idx in Weeks)(
@@ -62,10 +63,23 @@ constraint forall(wk_idx in Weeks)(
     )
 );
 
+constraint forall(i in Teams)(
+    sum(j in Weeks)(1) = w  % Each team plays exactly w games
+);
+
+constraint forall(p_val in ActualPeriods)(
+    sum(i in Teams, j in Weeks)(T_period[i,j] = p_val) = 2 * w
+);
+
+constraint forall(i in Teams, p_val in ActualPeriods, wk in 1..(w-2))(
+    (T_period[i,wk] = p_val /\ T_period[i,wk+1] = p_val) ->
+    T_period[i,wk+2] != p_val
+);
+
 % SYMMETRY BREAKING
 constraint T[1,1] = 0 /\ T[2,1] = 1;  
 
-constraint if n <= 10 then
+constraint if n <= 14  then
     % Full symmetry breaking for small n
     forall(j in Weeks, j_prime in Weeks where j < j_prime)(
         lex_lesseq([T[i,j] | i in Teams], [T[i,j_prime] | i in Teams])
@@ -78,13 +92,7 @@ else
     true
 endif;
 
-% Diversity constraint: limit consecutive periods
-constraint forall(i in Teams, p_val in ActualPeriods, wk in 1..(w-2))(
-    (T_period[i,wk] = p_val /\ T_period[i,wk+1] = p_val) ->
-    T_period[i,wk+2] != p_val
-);
-
-solve satisfy;
+solve  satisfy;
 
 output [
     "Schedule Matrix T:\n"
