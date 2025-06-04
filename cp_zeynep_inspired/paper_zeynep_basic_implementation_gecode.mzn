@@ -105,6 +105,11 @@ constraint forall(w1, w2 in ExtendedWeeks where w1 < w2)(
     )
 ) :: "SB2_week_lexicographic_ordering";
 
+constraint forall(w1, w2 in Weeks where w1 < w2)(
+    lex_less([games[p, w1] | p in Periods], [games[p, w2] | p in Periods])
+) :: "SB3_game_ordering_between_weeks";
+
+
 % SB3: Fix first game
 % Strong symmetry breaking: fix the first game to be teams 1 vs 2
 constraint teams[1, 1, 1] = 1 /\ teams[1, 1, 2] = 2
@@ -120,15 +125,6 @@ constraint forall(p in Periods)(
     teams[p, extended_weeks, 1] < teams[p, extended_weeks, 2]
 ) :: "AUX1_dummy_week_structure";
 
-% ==============================================================================
-% IMPLIED CONSTRAINTS (Performance Enhancement)
-% ==============================================================================
-
-% IMP1: Game ordering between weeks
-% Additional constraint to enhance propagation: games are ordered between weeks
-constraint forall(w1, w2 in Weeks where w1 < w2)(
-    lex_less([games[p, w1] | p in Periods], [games[p, w2] | p in Periods])
-) :: "IMP1_game_ordering_between_weeks";
 
 
 % ==============================================================================
