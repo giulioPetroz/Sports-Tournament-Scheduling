@@ -47,9 +47,6 @@ def benchmark_all_layers():
       #  "cp/layer_3_implied_constraints.mzn",
       #  "cp/layer_4_basic_symmetry.mzn",
       #  "cp/layer_5_team_ordering.mzn",
-        "cp/layer_6_complete.mzn",
-        "cp/layer_6b_fairness.mzn",
-        "cp/laber_6c_advanced.mzn"
     ]
     
     solvers = ["gecode", "chuffed"]
