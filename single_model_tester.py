@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 import os
 
 def run_benchmark():
-    model_file = "cp_zeynep_inspired/paper_zeynep_basic_implementation_gecode.mzn"
-    solvers = ["gecode", "chuffed", "or-tools"] 
+    model_file = "cp_zeynep_inspired/paper_z.mzn"
+    solvers = ["gecode", "chuffed"] 
     instances = [4, 6, 8, 10, 12, 14, 16, 18, 20]  
     time_limit = 300
     
