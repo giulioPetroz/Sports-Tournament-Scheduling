@@ -11,7 +11,7 @@ parser.add_argument(
     nargs="+",
     type=str,
     default=["CBC"],
-    choices=["CBC"],
+    choices=["CBC", "HiGHS", "gurobi", "CPLEX", "SCIP"],
     help="Solvers chosen to solve instance",
 )
 parser.add_argument(
@@ -39,9 +39,9 @@ def format_schedule(x):
         for w in weeks:
             matchup = []
             for t in teams:
-                if value(x[t][w][p * 2]) == 1:  # t plays at home in week w period p
+                if value(x[t][w][p * 2]) > 0.5:  # t plays at home in week w period p
                     matchup.insert(0, t + 1)
-                elif value(x[t][w][p * 2 + 1]) == 1:
+                elif value(x[t][w][p * 2 + 1]) > 0.5:  # t plays away in week w period p
                     matchup.append(t + 1)
             period_matchups.append(matchup)
 
@@ -50,13 +50,21 @@ def format_schedule(x):
     return schedule
 
 
-result = {}  # stores result for each solver
+result = {}  # holds result for each solver
 
 for solver_id in solvers:
     # Selecting solver
     match solver_id:
         case "CBC":
             solver = PULP_CBC_CMD(timeLimit=timeout)
+        case "HiGHS":
+            solver = HiGHS(timeLimit=timeout)
+        case "gurobi":
+            solver = GUROBI_CMD(timeLimit=timeout)
+        case "CPLEX":
+            solver = CPLEX_CMD(timeLimit=timeout)
+        case "SCIP":
+            solver = SCIP_CMD(timeLimit=timeout)
 
     # Model
     prob = LpProblem("STS problem", LpMinimize)
