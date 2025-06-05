@@ -26,9 +26,8 @@ solvers = args.solvers  # List of solver ids
 timeout = args.timeout  # Solver timeout
 instance_id = args.id  # Instance id
 
-teams = range(n)  # Both team and weekly slots identifiers
+teams = range(n)  # Team identifiers
 weeks = range(n - 1)  # Week identifiers
-slots = range(n)  # Slots go from 0 to n - 1 (periods implied by slot ids)
 periods = range(n // 2)  # Period identifiers
 
 
@@ -37,14 +36,10 @@ def format_schedule(x):
     for p in periods:
         period_matchups = []
         for w in weeks:
-            matchup = []
-            for t in teams:
-                if value(x[t][w][p * 2]) > 0.5:  # t plays at home in week w period p
-                    matchup.insert(0, t + 1)
-                elif value(x[t][w][p * 2 + 1]) > 0.5:  # t plays away in week w period p
-                    matchup.append(t + 1)
-            period_matchups.append(matchup)
-
+            for i in teams:
+                for j in teams:
+                    if value(x[i][j][w][p]) > 0.5 and j != i:
+                        period_matchups.append([i + 1, j + 1])
         schedule.append(period_matchups)
 
     return schedule
@@ -71,52 +66,60 @@ for solver_id in solvers:
 
     # Decision variables
     x = LpVariable.dicts(
-        "X", indices=(teams, weeks, slots), cat="Binary"
-    )  # x[i][j][k] = 1 if team i plays in slot k in week j, 0 otherwise
+        "X", indices=(teams, teams, weeks, periods), cat="Binary"
+    )  # x[i][j][k][m] = 1 if i plays j in week k and period m, i at home while j away
 
-    # Auxiliary variables
-    b = LpVariable.dicts(
-        "B", indices=(teams, teams, weeks, periods), cat="Binary"
-    )  # b[i][j][k][m] = 1 if i plays j in week k and period m, i at home while j away
+    # team cannot play itself
+    for i in teams:
+        for w in weeks:
+            for p in periods:
+                x[i][i][w][p] = 0
 
-    # Linking variables
-    for t1 in teams:
-        for t2 in teams:
-            if t1 == t2:
-                continue  # Skip constraint addition
-            for w in weeks:
-                for p in periods:
-                    # b[t1, t2, w, p] iff x[t1, w, p*2] AND x[t2, w, p*2 + 1]
-                    # Linearization: C = C1 /\ C2 becomes b <= b1, b <= b2, b1 + b2 <= b + 1
-                    prob += x[t1][w][p * 2] + x[t2][w][p * 2 + 1] <= b[t1][t2][w][p] + 1
-                    prob += b[t1][t2][w][p] <= x[t1][w][p * 2]
-                    prob += b[t1][t2][w][p] <= x[t2][w][p * 2 + 1]
+    # Every period in every week has a single match
+    for w in weeks:
+        for p in periods:
+            prob += lpSum([x[i][j][w][p] for i in teams for j in teams if j != i]) == 1
 
     # Every team plays once a week
-    for t in teams:
-        for w in weeks:
-            prob += lpSum([x[t][w][s] for s in slots]) == 1
-
-    # Every weekly slot is assigned to a single unique team
     for w in weeks:
-        for s in slots:
-            prob += lpSum([x[t][w][s] for t in teams]) == 1
-
-    # Every team plays with every other team only once
-    for t1 in teams:
-        for t2 in range(t1 + 1, n):
+        for i in teams:
             prob += (
                 lpSum(
-                    [b[t1][t2][w][p] for w in weeks for p in periods]
-                    + [b[t2][t1][w][p] for w in weeks for p in periods]
+                    [
+                        x[i][j][w][p] + x[j][i][w][p]
+                        for j in teams
+                        if j != i
+                        for p in periods
+                    ]
                 )
                 == 1
             )
 
-    # Every team plays at most twice in the same period over the tournament
-    for t in teams:
-        for p in periods:  # Periods
-            prob += lpSum([x[t][w][s] for w in weeks for s in (p * 2, p * 2 + 1)]) <= 2
+    # Every team plays against every other once
+    for i in teams:
+        for j in teams:
+            if i != j:
+                prob += (
+                    lpSum(
+                        [x[i][j][w][p] + x[j][i][w][p] for w in weeks for p in periods]
+                    )
+                    == 1
+                )
+
+    # Every team plays at most twice in the same period
+    for i in teams:
+        for p in periods:
+            prob += (
+                lpSum(
+                    [
+                        x[i][j][w][p] + x[j][i][w][p]
+                        for j in teams
+                        if j != i
+                        for w in weeks
+                    ]
+                )
+                <= 2
+            )
 
     # Team imbalance score
     team_imbalance = LpVariable.dicts(
@@ -128,7 +131,7 @@ for solver_id in solvers:
     for t1 in teams:
         team_home_games[t1] = lpSum(
             [
-                b[t1][t2][w][p]
+                x[t1][t2][w][p]
                 for t2 in teams
                 if t2 != t1
                 for w in weeks
@@ -137,7 +140,7 @@ for solver_id in solvers:
         )
         team_away_games[t1] = lpSum(
             [
-                b[t2][t1][w][p]
+                x[t2][t1][w][p]
                 for t2 in teams
                 if t2 != t1
                 for w in weeks
