@@ -73,7 +73,7 @@ for solver_id in solvers:
     for i in teams:
         for w in weeks:
             for p in periods:
-                x[i][i][w][p] = 0
+                prob += x[i][i][w][p] == 0
 
     # Every period in every week has a single match
     for w in weeks:
