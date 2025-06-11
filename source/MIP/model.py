@@ -57,7 +57,10 @@ for solver_id in solvers:
         case "gurobi":
             solver = GUROBI_CMD(timeLimit=timeout)
         case "CPLEX":
-            solver = CPLEX_CMD(timeLimit=timeout)
+            solver = CPLEX_CMD(
+                path="/opt/ibm/ILOG/CPLEX_Studio_Community2212/cplex/bin/x86-64_linux/cplex",
+                timeLimit=timeout,
+            )
         case "SCIP":
             solver = SCIP_CMD(timeLimit=timeout)
 
