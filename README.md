@@ -4,7 +4,7 @@ To build docker image from dockerfile:
 
 To run container:
 
-    `docker run -it cdmo /bin/bash`
+    `docker run -it cdmo`
 
 Close container:
 
