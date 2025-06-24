@@ -32,7 +32,7 @@ array [P, W, S] of T: rb = array3d(P, W, S,
 % Decision variables
 array [P, W] of var P: matches;
 array [P, W] of var 0..1: home_away;
-var 1..N - 1: max_imbalance; 
+var 1..N div 2: max_imbalance; 
 
 % Auxiliary variables
 array [T] of var 1..N-1: team_home_games;
@@ -70,17 +70,18 @@ constraint symmetry_breaking_constraint(
                [matches[p, w] | w in W, p in reverse(P)])
 );
 
+/*
 constraint lex_lesseq([home_away[p, w] | p in P, w in W], 
                       [1 - home_away[p, w] | p in P, w in W]);
-
-constraint lex_lesseq(
+*/
+/*constraint lex_lesseq(
     [rb[matches[p, 0], 0, s] | p in P, s in S],
     [rb[matches[p, 1], 1, s] | p in P, s in S]
-);
-constraint home_away[0, 0] = 0;
+);*/
+%constraint home_away[0, 0] = 0;
 
-
-solve :: if N >= 20 then
+/*
+solve :: if N >= 4 then
     % Strategy 1: Very aggressive for N≥20
     restart_geometric(2.0, 500) ::
     relax_and_reconstruct([matches[p,w] | p in P, w in W], 90) ::
@@ -112,4 +113,4 @@ else
         int_search([home_away[p,w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
 endif minimize max_imbalance;
-
+*/
