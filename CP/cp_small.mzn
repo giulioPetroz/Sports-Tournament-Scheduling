@@ -94,7 +94,7 @@ solve ::
         % first_fail -> variables with the smallest domain are selected first since they are more likely to lead to a failure
         % indomain_min -> select the smallest value in the domain of the variable and proced in ascending order
         % complete -> complete search, no partial solutions. Ensures optimality
-        int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_split, complete),
+        int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
     minimize max_imbalance;
