@@ -59,8 +59,7 @@ constraint forall(t in T)(
     )
 ); 
 
-
-% Sostituisci il vincolo esistente con:
+% Fairness constraint: balance home and away games
 constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
@@ -89,13 +88,13 @@ constraint forall(w in W)(
 
 solve ::
     restart_luby(100) :: % restart strategy, restart after 250 time units (in gecode a time unit represents a failure)
-    relax_and_reconstruct([matches[p, w] | p in P, w in W], 85) :: % when a solution is found it keeps 85% of the matches variables fixed and relaxes the others (LNS)
+    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) :: % when a solution is found it keeps 85% of the matches variables fixed and relaxes the others (LNS)
     seq_search([
         % dom_w_deg -> focus on the most constrained variables first, and prioritize those involved in difficult constraints
         % first_fail -> variables with the smallest domain are selected first since they are more likely to lead to a failure
         % indomain_min -> select the smallest value in the domain of the variable and proced in ascending order
         % complete -> complete search, no partial solutions. Ensures optimality
-        int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
+        int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_split, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
     minimize max_imbalance;
