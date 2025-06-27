@@ -35,6 +35,8 @@ array [P, W] of var 0..1: home_away; % if home_away[p,w] = 0 then the team in rb
 var 1..N div 2 : max_imbalance;
 array [T] of var 1..N-1: home_games;
 
+
+
 % Core constraints
 % All periods computed in the round-robin structure must be used only once
 constraint forall(w in W)(
@@ -57,6 +59,7 @@ constraint forall(t in T)(
     )
 ); 
 
+
 % Sostituisci il vincolo esistente con:
 constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
@@ -65,6 +68,7 @@ constraint forall(t in T)(
 
 % Symmetry breaking constraints
 % Ensure that the matches are ordered lexicographically to break symmetry
+
 constraint symmetry_breaking_constraint(
     lex_greater([matches[p, w] | w in W, p in P], 
                [matches[p, w] | w in W, p in reverse(P)])
@@ -72,9 +76,19 @@ constraint symmetry_breaking_constraint(
 
 constraint home_away[0, 0] = 0; % first match is home for team 0
 
-/*
+
+constraint forall(w in W)(
+    abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
+);
+
+constraint forall(w in W)(
+    global_cardinality([rb[matches[p, w], w, s] | p in P, s in S], 
+                      [t | t in T], [1 | t in T], [1 | t in T])
+);
+
+
 solve ::
-    restart_luby(250) :: % restart strategy, restart after 250 time units (in gecode a time unit represents a failure)
+    restart_luby(100) :: % restart strategy, restart after 250 time units (in gecode a time unit represents a failure)
     relax_and_reconstruct([matches[p, w] | p in P, w in W], 85) :: % when a solution is found it keeps 85% of the matches variables fixed and relaxes the others (LNS)
     seq_search([
         % dom_w_deg -> focus on the most constrained variables first, and prioritize those involved in difficult constraints
@@ -84,6 +98,16 @@ solve ::
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
-    minimize max_imbalance;*/
+    minimize max_imbalance;
+/*
+solve ::
+    restart_luby(100) ::
+    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) ::
+    int_search([matches[p, w] | p in P, w in W] ++ [home_away[p, w] | p in P, w in W], 
+               dom_w_deg, indomain_min, complete)
+    minimize max_imbalance;
+*/
 
-solve minimize max_imbalance;
+/*solve ::
+    int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete)
+    minimize max_imbalance;*/
