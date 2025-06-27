@@ -47,4 +47,3 @@ minizinc --solver gecode -a --time-limit 300000 -D "n=14;" CP/cp_small.mzn
 # Run with different instance sizes
 minizinc --solver gecode -a --time-limit 300000 -D "n=16;" CP/cp_small.mzn
 minizinc --solver gecode -a --time-limit 300000 -D "n=18;" CP/cp_small.mzn
-
