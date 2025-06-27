@@ -33,9 +33,7 @@ array [P, W, S] of T: rb = array3d(P, W, S,
 array [P, W] of var P: matches;
 array [P, W] of var 0..1: home_away; % if home_away[p,w] = 0 then the team in rb[p,w,0] plays at home against the team in rb[p,w,1], otherwise the opposite
 var 1..N div 2 : max_imbalance;
-
-%array [T] of var (N-1) div 2..(N-1) div 2 + 1: home_games;
-array [T] of var 0..N-1: home_games;
+array [T] of var 1..N-1: home_games;
 
 % Core constraints
 % All periods computed in the round-robin structure must be used only once
@@ -59,17 +57,11 @@ constraint forall(t in T)(
     )
 ); 
 
-
-% Aggiungi queste definizioni dopo le altre variabili:
-int: min_home_games = (N - 1) div 2;
-int: max_home_games = (N - 1) div 2 + 1;
-
 % Sostituisci il vincolo esistente con:
 constraint forall(t in T)(
-    home_games[t] >= min_home_games /\
-    home_games[t] <= max_home_games /\
-    abs(2 * home_games[t] - (N - 1)) <= 2 * max_imbalance
+    abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
+
 
 % Symmetry breaking constraints
 % Ensure that the matches are ordered lexicographically to break symmetry
@@ -80,7 +72,7 @@ constraint symmetry_breaking_constraint(
 
 constraint home_away[0, 0] = 0; % first match is home for team 0
 
-
+/*
 solve ::
     restart_luby(250) :: % restart strategy, restart after 250 time units (in gecode a time unit represents a failure)
     relax_and_reconstruct([matches[p, w] | p in P, w in W], 85) :: % when a solution is found it keeps 85% of the matches variables fixed and relaxes the others (LNS)
@@ -92,4 +84,6 @@ solve ::
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
-    minimize max_imbalance;
+    minimize max_imbalance;*/
+
+solve minimize max_imbalance;
