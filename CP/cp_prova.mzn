@@ -33,7 +33,7 @@ array [P, W, S] of T: rb = array3d(P, W, S,
 array [P, W] of var P: matches; 
 array [P, W] of var 0..1: home_away;
 array [T] of var 0..N: home_games;
-var 1..N: max_imbalance;
+var 1..N-1: max_imbalance;
 
 % Each team plays once per week
 constraint forall(w in W)(
@@ -74,7 +74,7 @@ constraint home_away[0, 0] = 0;
 
 % Solve with Luby restart, relax+reconstruct, smart search
 solve ::
-    restart_luby(1500) ::
+    restart_luby(1000) ::
     relax_and_reconstruct([matches[p, w] | p in P, w in W], 90) ::
     seq_search([
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
