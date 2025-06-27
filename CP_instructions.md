@@ -2,10 +2,12 @@
 # To build docker image from dockerfile:
 
     `docker build -t cdmo .`
+    docker build --platform linux/amd64 -t cdmo .
 
 # To run container:
 
     `docker run -it cdmo`
+    docker run --platform linux/amd64  -it cdmo
 
 # Close container:
 

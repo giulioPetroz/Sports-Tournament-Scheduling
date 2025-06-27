@@ -32,7 +32,8 @@ array [P, W, S] of T: rb = array3d(P, W, S,
 % Decision variables with tighter domains
 array [P, W] of var P: matches;
 array [P, W] of var 0..1: home_away; % if home_away[p,w] = 0 then the team in rb[p,w,0] plays at home against the team in rb[p,w,1], otherwise the opposite
-var 1..N div 2: max_imbalance;
+var 1..N div 2 : max_imbalance;
+
 %array [T] of var (N-1) div 2..(N-1) div 2 + 1: home_games;
 array [T] of var 0..N-1: home_games;
 
@@ -59,8 +60,15 @@ constraint forall(t in T)(
 ); 
 
 
+% Aggiungi queste definizioni dopo le altre variabili:
+int: min_home_games = (N - 1) div 2;
+int: max_home_games = (N - 1) div 2 + 1;
+
+% Sostituisci il vincolo esistente con:
 constraint forall(t in T)(
-    abs(home_games[t] - (N - 1) div 2) <= max_imbalance
+    home_games[t] >= min_home_games /\
+    home_games[t] <= max_home_games /\
+    abs(2 * home_games[t] - (N - 1)) <= 2 * max_imbalance
 );
 
 % Symmetry breaking constraints
