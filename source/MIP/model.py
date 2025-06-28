@@ -30,18 +30,36 @@ teams = range(n)  # Team identifiers
 weeks = range(n - 1)  # Week identifiers
 periods = range(n // 2)  # Period identifiers
 
+# Round robin
+week_matchups = []
+for w in weeks:
+    current_week_games = []
+    current_week_games.append(tuple(sorted([n - 1, w])))
 
-def format_schedule(x):
+    for p in range(1, n // 2):
+        team1 = (p + w) % (n - 1)
+        team2 = (n - p + w - 1) % (n - 1)
+        current_week_games.append(tuple(sorted([team1, team2])))
+    week_matchups.append(current_week_games)
+
+
+def format_schedule(period_assign, home_away_assign, week_matchups, n):
     schedule = []
-    for p in periods:
-        period_matchups = []
-        for w in weeks:
-            for i in teams:
-                for j in teams:
-                    if value(x[i][j][w][p]) > 0.5 and j != i:
-                        period_matchups.append([i + 1, j + 1])
-        schedule.append(period_matchups)
+    for p in range(n // 2):
+        period_games = []
+        for w in range(n - 1):
+            week_game = None
+            for g in range(n // 2):
+                if value(period_assign[w][p][g]) > 0.5:
+                    i, j = week_matchups[w][g]
+                    if value(home_away_assign[w][g]) > 0.5:
+                        week_game = [j, i]
+                    else:
+                        week_game = [i, j]
 
+            period_games.append(week_game)
+
+        schedule.append(period_games)
     return schedule
 
 
@@ -68,96 +86,78 @@ for solver_id in solvers:
     prob = LpProblem("STS problem", LpMinimize)
 
     # Decision variables
-    x = LpVariable.dicts(
-        "X", indices=(teams, teams, weeks, periods), cat="Binary"
-    )  # x[i][j][k][m] = 1 if i plays j in week k and period m, i at home while j away
+    period_assign = LpVariable.dicts(
+        "PeriodAssignment", indices=(weeks, periods, periods), cat="Binary"
+    )  # period_assign[i, j, k] == 1 if in week i period j the game in position k in week_matchups is played out
 
-    # team cannot play itself
-    for i in teams:
+    home_away_assign = LpVariable.dicts(
+        "HomeAwayAssignment", indices=(weeks, periods), cat="Binary"
+    )  # For (i, j) in week_matchups[week, game_index], value 0 for i vs j and value 1 for j vs i
+
+    # Constraints
+
+    # Each period is assigned one game per week
+    for w in weeks:
+        for p in periods:
+            prob += lpSum([period_assign[w][p][g] for g in periods]) == 1
+
+    # Each game is assigned to one period
+    for w in weeks:
+        for g in periods:
+            prob += lpSum([period_assign[w][p][g] for p in periods]) == 1
+
+    # Auxiliary variables
+    team_home_games = LpVariable.dicts(
+        "HomeGamesCount", (teams), lowBound=0, upBound=n - 1, cat="Integer"
+    )
+    team_play_period = LpVariable.dicts(
+        "TeamPlayerPeriod", indices=(teams, weeks, periods), cat="Binary"
+    )  # team_play_period[i,j,k] == 1 if team i in week j plays in period k
+
+    # Link team_play_period to period_assign and week_matchups
+    for t in teams:
         for w in weeks:
+            team_weekly_game = None  # Game team t plays in week w
+            for game_idx in periods:
+                team1, team2 = week_matchups[w][game_idx]
+                if team1 == t or team2 == t:
+                    team_weekly_game = game_idx
+                    break
+
             for p in periods:
-                prob += x[i][i][w][p] == 0
+                # team_play_period[t][w][p] == 1 iff period-assign[w][p][game_idx] == 1
+                prob += team_play_period[t][w][p] == period_assign[w][p][game_idx]
 
-    # Every period in every week has a single match
-    for w in weeks:
-        for p in periods:
-            prob += lpSum([x[i][j][w][p] for i in teams for j in teams if j != i]) == 1
+    # Each team plays at most twice in the same period
+    for t in teams:
+        for p_scheduled in periods:
+            prob += lpSum([team_play_period[t][w][p_scheduled] for w in weeks]) <= 2
 
-    # Every team plays once a week
-    for w in weeks:
-        for i in teams:
-            prob += (
-                lpSum(
-                    [
-                        x[i][j][w][p] + x[j][i][w][p]
-                        for j in teams
-                        if j != i
-                        for p in periods
-                    ]
-                )
-                == 1
-            )
+    # Objective variable
+    max_imbalance = LpVariable("MaxImbalance", lowBound=1, upBound=n - 1, cat="Integer")
 
-    # Every team plays against every other once
-    for i in teams:
-        for j in teams:
-            if i != j:
-                prob += (
-                    lpSum(
-                        [x[i][j][w][p] + x[j][i][w][p] for w in weeks for p in periods]
-                    )
-                    == 1
-                )
-
-    # Every team plays at most twice in the same period
-    for i in teams:
-        for p in periods:
-            prob += (
-                lpSum(
-                    [
-                        x[i][j][w][p] + x[j][i][w][p]
-                        for j in teams
-                        if j != i
-                        for w in weeks
-                    ]
-                )
-                <= 2
-            )
-
-    # Team imbalance score
-    team_imbalance = LpVariable.dicts(
-        "Imbalance", teams, lowBound=1, upBound=n - 1, cat="Integer"
-    )  # team_imbalance[t] > 0 if t plays more at home or more away, = 0 for balance
-
-    team_home_games = {}  # team_home_games[t]: how many games t plays at home
-    team_away_games = {}  # team_away_games[t]: how many games t plays away
-    for t1 in teams:
-        team_home_games[t1] = lpSum(
+    # How much a team plays at home
+    for t in teams:
+        prob += team_home_games[t] == lpSum(
             [
-                x[t1][t2][w][p]
-                for t2 in teams
-                if t2 != t1
+                (1 - home_away_assign[w][p])
                 for w in weeks
                 for p in periods
+                if week_matchups[w][p][0] == t
             ]
-        )
-        team_away_games[t1] = lpSum(
-            [
-                x[t2][t1][w][p]
-                for t2 in teams
-                if t2 != t1
-                for w in weeks
-                for p in periods
-            ]
+        ) + lpSum(
+            home_away_assign[w][p]
+            for w in weeks
+            for p in periods
+            if week_matchups[w][p][1] == t
         )
 
     for t in teams:
-        # Because the problem is a minimization problem imposing team_imbalance[t] >= max{-x, x} is equivalent to computing abs(x)
-        prob += team_imbalance[t] >= team_home_games[t] - team_away_games[t]
-        prob += team_imbalance[t] >= team_away_games[t] - team_home_games[t]
+        # max_imbalance = max{|home_games - away_games|}
+        prob += max_imbalance >= (2 * team_home_games[t] - (n - 1))
+        prob += max_imbalance >= -(2 * team_home_games[t] - (n - 1))
 
-    # Objective function: sum of imbalance score of each team
-    prob += lpSum([team_imbalance[t] for t in teams])
+    prob += max_imbalance
 
     # Solve problem
     start = timer()
@@ -171,14 +171,18 @@ for solver_id in solvers:
                 "time": int(end - start),
                 "optimal": True,
                 "obj": value(prob.objective),
-                "sol": format_schedule(x),
+                "sol": format_schedule(
+                    period_assign, home_away_assign, week_matchups, n
+                ),
             }
         case "Not optimal":  # No optimality guarantee
             result[solver_id] = {
                 "time": timeout,
                 "optimal": False,
                 "obj": value(prob.objective),
-                "sol": format_schedule(x),
+                "sol": format_schedule(
+                    period_assign, home_away_assign, week_matchups, n
+                ),
             }
         case "Not Solved":  # Timed out before finding a solution
             result[solver_id] = {
