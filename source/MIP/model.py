@@ -53,9 +53,9 @@ def format_schedule(period_assign, home_away_assign, week_matchups, n):
                 if value(period_assign[w][p][g]) > 0.5:
                     i, j = week_matchups[w][g]
                     if value(home_away_assign[w][g]) > 0.5:
-                        week_game = [j, i]
+                        week_game = [j + 1, i + 1]
                     else:
-                        week_game = [i, j]
+                        week_game = [i + 1, j + 1]
 
             period_games.append(week_game)
 
