@@ -1,12 +1,12 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 WORKDIR /cdmo
 
-# Install basic dependencies (curl for miniconda installer)
+# Install dependencies
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y curl bzip2 git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    curl bzip2 git z3 cvc5 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Miniconda
 ENV CONDA_DIR=/opt/conda
@@ -15,21 +15,17 @@ RUN curl -LO "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64
     rm Miniconda3-latest-Linux-x86_64.sh && \
     $CONDA_DIR/bin/conda clean --all --yes
 
-# Add Conda to PATH
 ENV PATH=$CONDA_DIR/bin:$PATH
 
-# Copy environment.yml file into the container
+# Copy environment.yml and install env
 COPY environment.yml .
+RUN conda env create -f environment.yml && conda clean --all --yes
 
-# Create the Conda environment
-RUN conda env create -f environment.yml && \
-    conda clean --all --yes
-
-# Activate the environment for subsequent commands
-ENV CONDA_DEFAULT_ENV=CDMO
+ENV CONDA_DEFAULT_ENV=SMT
 ENV PATH="$CONDA_DIR/envs/${CONDA_DEFAULT_ENV}/bin:$PATH"
 
-# Copy project files
+# Copy your code
 COPY . .
 
+# Default
 CMD ["bash"]
