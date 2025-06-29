@@ -11,7 +11,7 @@
     `exit`
 
 ## To run container with the CPLEX solver:
-- ensure CPLEX is installed on device, it will be mounted at runtime
+- ensure CPLEX 22.1.2 is installed on device with the license, it will be mounted at runtime
 - run container with:
 
     `sudo docker run -v /user/path/to/cplex:/opt/ibm/ILOG/ -it cdmo`
