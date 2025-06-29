@@ -65,7 +65,6 @@ constraint forall(t in T)(
 
 % Symmetry breaking constraints
 % Ensure that the matches are ordered lexicographically to break symmetry
-
 constraint symmetry_breaking_constraint(
     lex_greater([matches[p, w] | w in W, p in P], 
                [matches[p, w] | w in W, p in reverse(P)])
@@ -78,7 +77,7 @@ constraint forall(w in W)(
     abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
 );
 
-%Implicit constraint -> Each team appears exactly once in each week
+%Redundant constraint -> Each team appears exactly once in each week
 constraint forall(w in W)(
     global_cardinality([rb[matches[p, w], w, s] | p in P, s in S], 
                       [t | t in T], [1 | t in T], [1 | t in T])
@@ -98,9 +97,7 @@ solve ::
     ])
     minimize max_imbalance;
 
-% Output the actual schedule in the required format
-% Simplified output - just the essential data
-% Output the essential data including rb array
+
 output [
     "max_imbalance=", show(max_imbalance), ";\n",
     "matches=", show(matches), ";\n",
