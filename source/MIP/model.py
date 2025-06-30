@@ -17,14 +17,12 @@ parser.add_argument(
 parser.add_argument(
     "-t", "--timeout", type=int, default=300, help="Solver timeout in seconds"
 )
-parser.add_argument("--id", type=str, help="Instance id")
 
 args = parser.parse_args()
 
 n = args.teams  # number of teams
 solvers = args.solvers  # List of solver ids
 timeout = args.timeout  # Solver timeout
-instance_id = args.id  # Instance id
 
 teams = range(n)  # Team identifiers
 weeks = range(n - 1)  # Week identifiers
@@ -208,5 +206,5 @@ for solver_id in solvers:
 
 print(result)
 # Storing result
-with open("res/MIP/" + instance_id + ".json", "w") as file:
+with open("res/MIP/" + str(n) + ".json", "w") as file:
     json.dump(result, file)
