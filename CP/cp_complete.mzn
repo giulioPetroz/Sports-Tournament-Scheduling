@@ -1,8 +1,6 @@
 include "globals.mzn";
 
-/**
- * Parameters and Sets
- */                  
+% Parameters and Sets
 int: N;               % Number of teams 
 set of int: T = 0..N-1;   % Set of teams 
 set of int: S = 0..1;     % Set of slots in a match (0=first team, 1=second team)
@@ -12,16 +10,14 @@ set of int: P = 0..N div 2 - 1; % Set of periods within each week
 % Ensure tournament feasibility
 constraint assert (N mod 2 == 0, "N must be even");
 
-/**
- * Round-Robin Structure Generator
- * 
- * Generates the canonical round-robin structure using the circle method.
- * For each period p and week w, rb[p,w,s] gives the team at slot s.
- * 
- * The algorithm works by:
- * - Fixing one team (N-1) in period 0
- * - Rotating other teams around a circle for subsequent periods
- */
+% Round-Robin Structure Generator
+% 
+% Generates the canonical round-robin structure using the circle method.
+% For each period p and week w, rb[p,w,s] gives the team at slot s.
+% 
+% The algorithm works by:
+% - Fixing one team (N-1) in period 0
+% - Rotating other teams around a circle for subsequent periods
 array [P, W, S] of T: rb = array3d(P, W, S, 
     [
         if s == 0 then
@@ -43,9 +39,7 @@ array [P, W, S] of T: rb = array3d(P, W, S,
     ]
 );
 
-/**
- * Decision Variables
- */
+% Decision Variables
 % Which period is scheduled in each week-period slot
 array [P, W] of var P: matches;
 
@@ -60,9 +54,7 @@ var 1..N div 2 : max_imbalance;
 % Number of home games for each team
 array [T] of var 1..N-1: home_games;
 
-/**
- * Core Tournament Constraints
- */
+% Core Tournament Constraints
 
 % Constraint 1: Each period must be used exactly once per week
 % Ensures all matches from the round-robin structure are scheduled
@@ -95,9 +87,7 @@ constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
 
-/*
- * Symmetry Breaking Constraints
- */
+% Symmetry Breaking Constraints
 
 % Break period assignment symmetry using lexicographic ordering
 constraint symmetry_breaking_constraint(
@@ -125,9 +115,7 @@ constraint forall(w in W)(
                       [1 | t in T])             % maximum: each team once
 );
 
-/**
- * Search Strategy and Optimization
- */
+% Search Strategy and Optimization
 solve ::
     % Restart strategy: use Luby sequence with base interval of 100 failures
     restart_luby(100) ::
@@ -147,9 +135,4 @@ solve ::
         % Search home/away assignments using first-fail heuristic
         % first_fail: prioritize variables with smallest remaining domain
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
-    ])
-    
-    % Objective: minimize the maximum imbalance in home game assignments
-    minimize max_imbalance;
-
-    %solve minimize max_imbalance;
+    ]) minimize max_imbalance;

@@ -7,6 +7,7 @@ import os
 
 MODELS = [
     ("cp_complete", "CP/cp_complete.mzn"),
+    
     # ("cp_nosymmetry", "CP/cp_nosymmetry.mzn")
     # Add more models here if needed
 ]
