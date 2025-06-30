@@ -17,6 +17,58 @@ n_list = [6, 8, 10, 12, 14, 16, 18, 20]
 output_dir = "res/CP"
 os.makedirs(output_dir, exist_ok=True)
 
+# === HELPER FUNCTION ===
+
+def generate_rb(n):
+    """Generate the round-robin structure for n teams"""
+    P = n // 2
+    W = n - 1
+
+    rb = []
+    for p in range(P):
+        period = []
+        for w in range(W):
+            if p == 0:
+                team1 = n - 1
+            else:
+                team1 = (p + w) % (n - 1)
+
+            if p == 0:
+                team2 = w
+            else:
+                team2 = (n - p + w - 1) % (n - 1)
+
+            period.append([team1, team2])
+        rb.append(period)
+
+    return rb
+
+# === MATRIX PARSER ===
+
+def parse_matrix(lines, keyword):
+    """Extract a 2D matrix from the output given a keyword like 'matches' or 'home_away'"""
+    matrix = []
+    reading = False
+
+    for line in lines:
+        line = line.strip()
+        if line.startswith(f"{keyword} ="):
+            reading = True
+            continue
+        if reading:
+            if line.startswith("|"):
+                # Remove prefix and possible closing '];'
+                row_content = line.split(":")[-1].strip()
+                # Remove trailing | or ];
+                row_content = row_content.replace("|", "").replace("];", "").strip()
+                if row_content:
+                    row_values = [int(x.strip()) for x in row_content.split(",") if x.strip().isdigit()]
+                    matrix.append(row_values)
+            elif line.startswith("];"):
+                break
+    return matrix
+
+
 # === MAIN LOOP ===
 
 for n in n_list:
@@ -36,28 +88,20 @@ for n in n_list:
             floored_runtime = int(runtime)
 
             output = result.stdout
-            lines = output.strip().split(";")
+            lines = output.strip().split("\n")
 
             max_imbalance = None
-            matches_list = []
-            home_away_list = []
-            rb_list = []
+            matches_matrix = []
+            home_away_matrix = []
 
             for line in lines:
-                if "max_imbalance=" in line:
-                    max_imbalance = int(line.strip().split("=")[1])
-                elif "matches=" in line:
-                    part = line.split("=")[1].strip().replace("[", "").replace("]", "")
-                    matches_list = [int(x) for x in part.split(",") if x.strip()]
-                elif "home_away=" in line:
-                    part = line.split("=")[1].strip().replace("[", "").replace("]", "")
-                    home_away_list = [int(x) for x in part.split(",") if x.strip()]
-                elif "rb=" in line:
-                    part = line.split("=")[1].strip().replace("[", "").replace("]", "")
-                    rb_list = [int(x) for x in part.split(",") if x.strip()]
+                if "max_imbalance =" in line:
+                    max_imbalance = int(line.split("=")[1].strip().replace(";", ""))
 
-            # If no valid output, mark as timeout (time = 300, optimal = false)
-            if max_imbalance is None or not matches_list or not home_away_list or not rb_list:
+            matches_matrix = parse_matrix(lines, "matches")
+            home_away_matrix = parse_matrix(lines, "home_away")
+
+            if max_imbalance is None or not matches_matrix or not home_away_matrix:
                 print(f"[n={n}] WARNING: {model_name} with {solver} did not return valid output. Marking as timeout.")
                 entry = {
                     "time": 300,
@@ -66,6 +110,7 @@ for n in n_list:
                     "sol": []
                 }
             else:
+                rb = generate_rb(n)
                 P = n // 2
                 W = n - 1
 
@@ -73,11 +118,10 @@ for n in n_list:
                 for p in range(P):
                     row = []
                     for w in range(W):
-                        idx = matches_list[p * W + w]
-                        ha = home_away_list[p * W + w]
+                        idx = matches_matrix[p][w]
+                        ha = home_away_matrix[p][w]
 
-                        team1 = rb_list[idx * W * 2 + w * 2 + 0]
-                        team2 = rb_list[idx * W * 2 + w * 2 + 1]
+                        team1, team2 = rb[idx][w][0], rb[idx][w][1]
 
                         if ha == 0:
                             home = team1
@@ -86,7 +130,7 @@ for n in n_list:
                             home = team2
                             away = team1
 
-                        row.append([home + 1, away + 1])
+                        row.append([home + 1, away + 1])  # 1-indexed
                     sol.append(row)
 
                 entry = {
@@ -101,7 +145,6 @@ for n in n_list:
 
             print(f"[n={n}] {key_name} Done. Time: {floored_runtime}s, Obj: {max_imbalance}, Optimal: {entry['optimal']}")
 
-    # === SAVE JSON FILE FOR THIS n ===
     json_path = os.path.join(output_dir, f"{n}.json")
     with open(json_path, "w") as f:
         json.dump(combined_data, f, indent=4)
