@@ -119,4 +119,4 @@ if __name__ == '__main__':
             print(sol)
             message = check_solution(sol)
             status = "VALID" if type(message) == str else "INVALID"
-            print(f"Approach: {approach}  Status: {status}  Reason: {message if status == 'VALID' else ''.join(message)}")
+            print(f"Approach: {approach}  Status: {status}  Reason: {message if status == 'VALID' else ' '.join(message)}")
