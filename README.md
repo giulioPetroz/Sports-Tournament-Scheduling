@@ -1,3 +1,5 @@
+# Docker instructions
+
 # To build docker image from dockerfile:
 
     `docker build -t cdmo .`
