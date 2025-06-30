@@ -1,0 +1,14 @@
+{
+    "cp_complete_gecode": {
+        "time": 300,
+        "optimal": false,
+        "obj": null,
+        "sol": []
+    },
+    "cp_complete_chuffed": {
+        "time": 300,
+        "optimal": false,
+        "obj": null,
+        "sol": []
+    }
+}

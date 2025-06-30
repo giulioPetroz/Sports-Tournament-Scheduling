@@ -1,55 +1,85 @@
 include "globals.mzn";
 
-int: n;
-int: N = n;
-set of int: T = 0..N-1;
-set of int: S = 0..1;
-set of int: W = 0..N-2;
-set of int: P = 0..N div 2 - 1;
+/**
+ * Parameters and Sets
+ */                  
+int: N;               % Number of teams 
+set of int: T = 0..N-1;   % Set of teams 
+set of int: S = 0..1;     % Set of slots in a match (0=first team, 1=second team)
+set of int: W = 0..N-2;   % Set of weeks/rounds (N-1 weeks for round-robin)
+set of int: P = 0..N div 2 - 1; % Set of periods within each week
 
+% Ensure tournament feasibility
 constraint assert (N mod 2 == 0, "N must be even");
 
-% Round-robin structure
+/**
+ * Round-Robin Structure Generator
+ * 
+ * Generates the canonical round-robin structure using the circle method.
+ * For each period p and week w, rb[p,w,s] gives the team at slot s.
+ * 
+ * The algorithm works by:
+ * - Fixing one team (N-1) in period 0
+ * - Rotating other teams around a circle for subsequent periods
+ */
 array [P, W, S] of T: rb = array3d(P, W, S, 
     [
         if s == 0 then
+            % First slot assignment
             if p == 0 then
-                N-1
+                N-1  % Team N-1 always in period 0, slot 0
             else
-                (p + w) mod (N-1)
+                (p + w) mod (N-1)  % Rotate teams for other periods
             endif
         else
+            % Second slot assignment
             if p == 0 then
-                w
+                w  % Opponent for fixed team N-1
             else
-                (N - p + w - 1) mod (N-1)
+                (N - p + w - 1) mod (N-1)  % Corresponding opponent
             endif
         endif
         | p in P, w in W, s in S
     ]
 );
 
-% Decision variables with tighter domains
+/**
+ * Decision Variables
+ */
+% Which period is scheduled in each week-period slot
 array [P, W] of var P: matches;
-array [P, W] of var 0..1: home_away; % if home_away[p,w] = 0 then the team in rb[p,w,0] plays at home against the team in rb[p,w,1], otherwise the opposite
+
+% Home/away assignment for each match
+% 0: first team (rb[matches[p,w],w,0]) plays at home
+% 1: second team (rb[matches[p,w],w,1]) plays at home
+array [P, W] of var 0..1: home_away;
+
+% Objective: minimize maximum imbalance in home games
 var 1..N div 2 : max_imbalance;
+
+% Number of home games for each team
 array [T] of var 1..N-1: home_games;
 
+/**
+ * Core Tournament Constraints
+ */
 
-
-% Core constraints
-% All periods computed in the round-robin structure must be used only once
+% Constraint 1: Each period must be used exactly once per week
+% Ensures all matches from the round-robin structure are scheduled
 constraint forall(w in W)(
     all_different([matches[p, w] | p in P])
 );
 
-% Each team plays at most twice in each period 
+% Constraint 2: Each team plays at most twice per period
 constraint forall(p in P)(
     global_cardinality([rb[matches[p, w], w, s] | w in W, s in S], 
-                      [t | t in 0..N-1], [0| _ in 0..N-1], [2 | _ in 0..N-1])
+                      [t | t in 0..N-1],        % teams
+                      [0| _ in 0..N-1],         % minimum occurrences
+                      [2 | _ in 0..N-1])        % maximum occurrences (at most 2)
 );
 
-% A team plays at home iff it is the first team in the pair in the round-robin structure and home_away[p, w] = 0 or if it is the second team in the pair and home_away[p, w] = 1
+% Constraint 3: Calculate home games for each team
+% A team plays at home if it's the first team and home_away=0, or second team and home_away=1
 constraint forall(t in T)(
     home_games[t] = sum(p in P, w in W)(
         bool2int(
@@ -59,42 +89,67 @@ constraint forall(t in T)(
     )
 ); 
 
-% Fairness constraint: balance home and away games
+% Constraint 4: Fairness - balance home and away games
+% Each team should play approximately (N-1)/2 home games
 constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
 
+/*
+ * Symmetry Breaking Constraints
+ */
 
-% Symmetry breaking constraints
-% Ensure that the matches are ordered lexicographically to break symmetry
-
+% Break period assignment symmetry using lexicographic ordering
 constraint symmetry_breaking_constraint(
     lex_greater([matches[p, w] | w in W, p in P], 
                [matches[p, w] | w in W, p in reverse(P)])
 );
 
-constraint home_away[0, 0] = 0; % first match is home for team 0
+% Fix first match home assignment to break home/away symmetry
+constraint home_away[0, 0] = 0;
 
-
+% Balance the home/away assignments within each week.
+% ---------------------------------------------------
+% This constraint ensures that, in every week (round), 
+% the number of matches where the first team plays at home (home_away = 0)
+% and the second team plays at home (home_away = 1) is roughly equal.
 constraint forall(w in W)(
     abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
 );
 
+% Implied Constraint ->  Ensure each team appears exactly once per week
 constraint forall(w in W)(
     global_cardinality([rb[matches[p, w], w, s] | p in P, s in S], 
-                      [t | t in T], [1 | t in T], [1 | t in T])
+                      [t | t in T],             % teams
+                      [1 | t in T],             % minimum: each team once
+                      [1 | t in T])             % maximum: each team once
 );
 
-
+/**
+ * Search Strategy and Optimization
+ */
 solve ::
-    restart_luby(100) :: % restart strategy, restart after 250 time units (in gecode a time unit represents a failure)
-    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) :: % when a solution is found it keeps 85% of the matches variables fixed and relaxes the others (LNS)
+    % Restart strategy: use Luby sequence with base interval of 100 failures
+    restart_luby(100) ::
+    
+    % Large Neighborhood Search: when solution found, keep 60% of match variables fixed
+    % and re-optimize the remaining 40% to find better solutions
+    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) ::
+    
+    % Sequential search strategy
     seq_search([
-        % dom_w_deg -> focus on the most constrained variables first, and prioritize those involved in difficult constraints
-        % first_fail -> variables with the smallest domain are selected first since they are more likely to lead to a failure
-        % indomain_min -> select the smallest value in the domain of the variable and proced in ascending order
-        % complete -> complete search, no partial solutions. Ensures optimality
+        % Search match assignments first using domain/weighted-degree heuristic
+        % dom_w_deg: prioritize variables in difficult constraints with small domains
+        % indomain_min: try smallest values first
+        % complete: ensure exhaustive search for optimality
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
+        
+        % Search home/away assignments using first-fail heuristic
+        % first_fail: prioritize variables with smallest remaining domain
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
     ])
+    
+    % Objective: minimize the maximum imbalance in home game assignments
     minimize max_imbalance;
+
+    %solve minimize max_imbalance;

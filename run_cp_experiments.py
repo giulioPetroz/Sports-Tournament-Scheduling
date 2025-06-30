@@ -11,8 +11,8 @@ MODELS = [
     # Add more models here if needed
 ]
 
-SOLVERS = ["gecode", "chuffed"]
-n_list = [6, 8, 10, 12, 14, 16, 18, 20]
+SOLVERS = ["gecode", "chuffed", "cp_sat"]
+n_list = [6, 8, 10, 12, 14, 16, 18, 20, 22]
 
 output_dir = "res/CP"
 os.makedirs(output_dir, exist_ok=True)
@@ -80,7 +80,7 @@ for n in n_list:
 
             start = time.time()
             result = subprocess.run(
-                ["minizinc", "--solver", solver, model_path, "--time-limit", "300000", "-D", f"n={n}"],
+                ["minizinc", "--solver", solver, model_path, "--time-limit", "300000", "-D", f"N={n}"],
                 capture_output=True, text=True
             )
             end = time.time()
