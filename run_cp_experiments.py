@@ -6,17 +6,26 @@ import os
 # === SETTINGS ===
 
 MODELS = [
-    ("cp_complete", "CP/cp_complete.mzn"),
-    
-    # ("cp_nosymmetry", "CP/cp_nosymmetry.mzn")
-    # Add more models here if needed
+    ("cp_baseline", "source/CP/cp_baseline.mzn"),
+    ("cp_complete", "source/CP/cp_complete.mzn"),
+    ("cp_noIMPL", "source/CP/cp_noIMPL.mzn"),
+    ("cp_noSB", "source/CP/cp_noSB.mzn"),
+    ("cp_baseline_basic", "source/CP/cp_baseline_basic.mzn"),
+    ("cp_complete_basic", "source/CP/cp_complete_basic.mzn"),
+    ("cp_noIMPL_basic", "source/CP/cp_noIMPL_basic.mzn"),
+    ("cp_noSB_basic", "source/CP/cp_noSB_basic.mzn"),
+    ("cp_baseline_no_relnrec", "source/CP/cp_baseline_norr.mzn"),
+    ("cp_complete_no_relnrec", "source/CP/cp_complete_norr.mzn"),
+    ("cp_noIMPL_no_relnrec", "source/CP/cp_noIMPL_norr.mzn"),
+    ("cp_noSB_no_relnrec", "source/CP/cp_noSB_norr.mzn")
 ]
 
-SOLVERS = ["gecode", "chuffed", "cp_sat"]
+SOLVERS = ["gecode", "chuffed", "cp-sat"]
 n_list = [6, 8, 10, 12, 14, 16, 18, 20, 22]
 
 output_dir = "res/CP"
 os.makedirs(output_dir, exist_ok=True)
+
 
 # === HELPER FUNCTION ===
 
@@ -44,10 +53,9 @@ def generate_rb(n):
 
     return rb
 
-# === MATRIX PARSER ===
 
 def parse_matrix(lines, keyword):
-    """Extract a 2D matrix from the output given a keyword like 'matches' or 'home_away'"""
+    """Extract a 2D matrix from the output given a keyword"""
     matrix = []
     reading = False
 
@@ -58,9 +66,7 @@ def parse_matrix(lines, keyword):
             continue
         if reading:
             if line.startswith("|"):
-                # Remove prefix and possible closing '];'
                 row_content = line.split(":")[-1].strip()
-                # Remove trailing | or ];
                 row_content = row_content.replace("|", "").replace("];", "").strip()
                 if row_content:
                     row_values = [int(x.strip()) for x in row_content.split(",") if x.strip().isdigit()]
@@ -72,12 +78,22 @@ def parse_matrix(lines, keyword):
 
 # === MAIN LOOP ===
 
+# Track which combos have failed
+skipped_combos = set()
+
 for n in n_list:
     combined_data = {}
 
     for model_name, model_path in MODELS:
         for solver in SOLVERS:
-            print(f"Running n={n}, model={model_name}, solver={solver}...")
+
+            combo_key = f"{model_name}_{solver}"
+
+            if combo_key in skipped_combos:
+                print(f"⚠️ Skipping {combo_key} for n={n} because it failed previously.")
+                continue
+
+            print(f"▶️ Running n={n}, model={model_name}, solver={solver}...")
 
             start = time.time()
             result = subprocess.run(
@@ -92,8 +108,6 @@ for n in n_list:
             lines = output.strip().split("\n")
 
             max_imbalance = None
-            matches_matrix = []
-            home_away_matrix = []
 
             for line in lines:
                 if "max_imbalance =" in line:
@@ -103,13 +117,14 @@ for n in n_list:
             home_away_matrix = parse_matrix(lines, "home_away")
 
             if max_imbalance is None or not matches_matrix or not home_away_matrix:
-                print(f"[n={n}] WARNING: {model_name} with {solver} did not return valid output. Marking as timeout.")
+                print(f"[n={n}] ❌ {combo_key} did not return valid output → Marking as failed for future.")
                 entry = {
                     "time": 300,
                     "optimal": False,
                     "obj": None,
                     "sol": []
                 }
+                skipped_combos.add(combo_key)
             else:
                 rb = generate_rb(n)
                 P = n // 2
@@ -141,13 +156,12 @@ for n in n_list:
                     "sol": sol
                 }
 
-            key_name = f"{model_name}_{solver}"
-            combined_data[key_name] = entry
+            combined_data[combo_key] = entry
 
-            print(f"[n={n}] {key_name} Done. Time: {floored_runtime}s, Obj: {max_imbalance}, Optimal: {entry['optimal']}")
+            print(f"[n={n}] ✅ {combo_key} Done. Time: {floored_runtime}s, Obj: {max_imbalance}, Optimal: {entry['optimal']}")
 
     json_path = os.path.join(output_dir, f"{n}.json")
     with open(json_path, "w") as f:
         json.dump(combined_data, f, indent=4)
 
-    print(f"[n={n}] All results saved to {json_path} ✅")
+    print(f"[n={n}] 📁 All results saved to {json_path} ✅")
