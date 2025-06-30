@@ -68,6 +68,8 @@ for solver_name in solvers:
                     solver_name,
                 ],
             }
+    # Reset total runtime for solver_name
+    total_runtime = 0
 
     # Find basic schedule without scheduling the slots by calling solve_satisfy
     # using a child process.
@@ -114,9 +116,11 @@ for solver_name in solvers:
             else:
                 opt_runtime = solution[1]
                 print(f"{solver_name}: solve_optimize in {opt_runtime:.4f}s")
+                total_runtime += opt_runtime
+
+        total_runtime += sat_runtime
 
     # Save results for current solver
-    total_runtime = opt_runtime + sat_runtime  # pyright: ignore
     print(f"{solver_name}: total runtime {total_runtime:.4f}s", end="\n\n")
     results[solver_name] = format_solution(solution, total_runtime)
 
