@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+FROM ubuntu:latest
+FROM minizinc/minizinc:2.9.1-jammy
 
 WORKDIR /cdmo
 
