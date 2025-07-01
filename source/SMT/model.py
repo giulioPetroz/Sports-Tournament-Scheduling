@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 import os
+import sys
 import re
 import time
 import json
 import argparse
 import subprocess
-from solution_checker import check_solution
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, ROOT)
+
+import solution_checker
 
 # ==== GLOBAL CONFIG ====
 GLOBAL_TIMEOUT = 300.0  # overall timeout in seconds
@@ -17,10 +22,11 @@ SOLVERS = {
         "model":   []
     },
     "cvc5": {
-        "cmd":     "cvc5",
-        "timeout": lambda t: ["--tlimit=" + str(int(t*1000))],
-        "model":   ["--produce-models"]
-    }
+    "cmd":     "cvc5",
+    "timeout": lambda t: ["--tlimit=" + str(int(t*1000))],
+    "model":   ["--produce-models"]
+    }   
+
 }
 
 def run_solver(name, smtfile, timeout_s):
@@ -172,49 +178,63 @@ def phase2_generate_smt2(n, S0, k, fname):
         f.write("\n".join(lines))
 
 def phase2_run(n, S0, solver, start_time):
-    """Binary search on k using only flips, with global timeout."""
-    k_hi = max(imbalance_of(S0,t) for t in range(1,n+1))
+    """Binary search on k using only flips, with global timeout.
+    Se trova k=1 valido si ferma subito.
+    """
+    k_hi = max(imbalance_of(S0, t) for t in range(1, n+1))
     best, best_k = S0, k_hi
-    low, high = 0, k_hi
+    low, high = 1, k_hi  # Non ha senso testare k=0
 
     while low <= high and time.time() - start_time < GLOBAL_TIMEOUT:
-        mid = (low+high)//2
+        mid = (low + high) // 2
         fname = f"sts_phase2_{solver}_{n}_{mid}.smt2"
         phase2_generate_smt2(n, best, mid, fname)
-        timeout_left = GLOBAL_TIMEOUT - (time.time()-start_time)
+        timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
         out, _ = run_solver(solver, f"smt/{fname}", timeout_left)
         lines = out.strip().splitlines()
 
-        if lines and lines[0]=="sat":
+        if lines and lines[0] == "sat":
+            # Decodifica i flip trovati
             flips = {}
             for L in lines[1:]:
                 m = re.match(r"\(define-fun\s+flip_(\d+)_(\d+).* (true|false)\)", L)
                 if m:
-                    p,w,val = int(m.group(1)), int(m.group(2)), (m.group(3)=="true")
-                    flips[(p,w)] = val
-            P_,W_ = len(best), len(best[0])
+                    p, w, val = int(m.group(1)), int(m.group(2)), (m.group(3) == "true")
+                    flips[(p, w)] = val
+
+            # Costruisci la nuova soluzione flipata
+            P_, W_ = len(best), len(best[0])
             new = []
             for p in range(P_):
-                row=[]
+                row = []
                 for w in range(W_):
-                    h0,a0 = best[p][w]
-                    row.append([a0,h0] if flips.get((p,w),False) else [h0,a0])
+                    h0, a0 = best[p][w]
+                    row.append([a0, h0] if flips.get((p, w), False) else [h0, a0])
+                row = row
                 new.append(row)
+
             best, best_k = new, mid
+
+            # Se abbiamo raggiunto imbalance minimo teorico = 1 fermiamo subito
+            if best_k == 1:
+                break
+
             high = mid - 1
         else:
             low = mid + 1
 
     return best, best_k
 
+
 # ==== MAIN ====
 
 def solve_and_save(n, solver, start_time):
     elapsed = time.time() - start_time
     header = f"\n=== n = {n}, solver = {solver.upper()} ==="
+
     if elapsed >= GLOBAL_TIMEOUT:
         print(header)
-        print(f"TIMEOUT in {elapsed:.2f}s")
+        print(f"TIMEOUT in {elapsed:.2f}s (before Phase 1)")
         return
 
     print(header)
@@ -226,26 +246,70 @@ def solve_and_save(n, solver, start_time):
         else:
             print(f"{status.upper()}")
         return
-    print(f"Valid solution found in {t1:.2f}s. Now optimizing...")
 
-    # PHASE 2
-    Sopt, k_opt = phase2_run(n, S0, solver, start_time)
-    total = time.time() - start_time
-    if total >= GLOBAL_TIMEOUT:
-        print(f"TIMEOUT")
+    print(f"PHASE 1 COMPLETE: valid schedule in {t1:.2f}s")
+    elapsed = time.time() - start_time
+    if elapsed >= GLOBAL_TIMEOUT:
+        print(f"TIMEOUT before Phase 2")
+        # qui passa t1 sia come phase1 sia come solver (solo fase 1)
+        save_json(n, solver, t1, S0, t1, S0, None, False)
         return
 
-    print(f"Optimal imbalance k* = {k_opt} at {total:.2f}s")
+    # PHASE 2
+    print(f"Starting Phase 2 (optimization)...")
+    Sopt, k_opt = phase2_run(n, S0, solver, start_time)
+    total = time.time() - start_time
 
-    # SAVE JSON
-    out = {
-        "phase1": {"time": round(t1,2), "sol": S0},
-        solver:   {"time": round(total,2), "obj": k_opt, "sol": Sopt}
-    }
-    os.makedirs("res/SMT", exist_ok=True)
-    with open(f"res/SMT/{n}_{solver}.json","w") as f:
-        json.dump(out, f, indent=2)
-    print(f"Result saved: res/SMT/{n}_{solver}.json")
+    if total >= GLOBAL_TIMEOUT:
+        print(f"TIMEOUT during Phase 2 after {total:.2f}s")
+    else:
+        print(f"PHASE 2 COMPLETE: best imbalance k* = {k_opt} in {total:.2f}s")
+
+    # se fase 2 è partita, `total` include anche l'ottimizzazione
+    save_json(n, solver, t1, S0, total, Sopt, k_opt, total < GLOBAL_TIMEOUT)
+
+
+
+def save_json(n, solver, t1, S0, total, Sopt, k_opt, optimal):
+    folder = os.path.join(ROOT, "res", "SMT")
+    os.makedirs(folder, exist_ok=True)
+
+    outpath = f"{folder}/{n}.json"
+
+    # Se esiste, carica il JSON attuale
+    if os.path.exists(outpath):
+        with open(outpath, "r") as f:
+            result = json.load(f)
+    else:
+        result = {}
+
+    # Aggiorna o aggiungi la chiave di questo solver
+    if Sopt is not None and k_opt is not None:
+        final_sol = {
+            "time": min(300, int(total)),
+            "optimal": optimal,
+            "obj": k_opt,
+            "sol": Sopt
+        }
+    else:
+        final_sol = {
+            "time": min(300, int(total)),
+            "optimal": False,
+            "obj": None,
+            "sol": S0
+        }
+
+    result[solver] = final_sol
+
+    # Salva di nuovo l’intero file
+    with open(outpath, "w") as f:
+        json.dump(result, f, indent=2)
+
+    print(f"Result saved: {outpath}")
+
+
+
+
 
 
 if __name__=="__main__":
