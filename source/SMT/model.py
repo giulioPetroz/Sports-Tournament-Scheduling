@@ -47,66 +47,74 @@ def imbalance_of(S, t):
 # ==== PHASE 1 ====
 
 def phase1_generate_smt2(n, fname):
-    P, W = n//2, n-1
+    P, W = n // 2, n - 1
+
     # Berger pairs
     rb = []
     for p in range(P):
         week = []
         for w in range(W):
             if p == 0:
-                pair = (n, w+1)
+                pair = (n, w + 1)
             else:
-                pair = (((p+w)%(n-1))+1, ((n-p+w-1)%(n-1))+1)
+                pair = (((p + w) % (n - 1)) + 1, ((n - p + w - 1) % (n - 1)) + 1)
             week.append(tuple(sorted(pair)))
         rb.append(week)
 
-    os.makedirs("smt", exist_ok=True)
+    # Path robusto: source/SMT/smt/
+    THIS_DIR = os.path.dirname(__file__)
+    smt_folder = os.path.join(THIS_DIR, "smt")
+    os.makedirs(smt_folder, exist_ok=True)
+
     lines = [
         "; phase1: complete schedule",
         "(set-logic QF_LIA)",
         "(set-option :produce-models true)"
     ]
-    # declarations
+
     for p in range(P):
         for w in range(W):
             for t in range(P):
                 lines.append(f"(declare-fun index_{p}_{w}_{t} () Bool)")
             lines.append(f"(declare-fun home_{p}_{w} () Int)")
             lines.append(f"(declare-fun away_{p}_{w} () Int)")
-    # exactly-one t per slot
+
     for p in range(P):
         for w in range(W):
             terms = " ".join(f"(ite index_{p}_{w}_{t} 1 0)" for t in range(P))
             lines.append(f"(assert (= (+ {terms}) 1))")
-    # each pair once per week
+
     for t in range(P):
         for w in range(W):
             terms = " ".join(f"(ite index_{p}_{w}_{t} 1 0)" for p in range(P))
             lines.append(f"(assert (= (+ {terms}) 1))")
-    # bind home/away
+
     for p in range(P):
         for w in range(W):
             ors = []
             for t in range(P):
-                h,a = rb[t][w]
+                h, a = rb[t][w]
                 ors.append(f"(and index_{p}_{w}_{t} (= home_{p}_{w} {h}) (= away_{p}_{w} {a}))")
             lines.append(f"(assert (or {' '.join(ors)}))")
-    # period-limit
-    for t in range(1, n+1):
+
+    for t in range(1, n + 1):
         for p in range(P):
-            terms=[]
+            terms = []
             for w in range(W):
                 for i in range(P):
-                    h,a = rb[i][w]
-                    if h==t or a==t:
+                    h, a = rb[i][w]
+                    if h == t or a == t:
                         terms.append(f"(ite index_{p}_{w}_{i} 1 0)")
             if terms:
                 lines.append(f"(assert (<= (+ {' '.join(terms)}) 2))")
-    # symmetry-break
+
     lines.append("(assert index_0_0_0)")
     lines += ["(check-sat)", "(get-model)"]
-    with open(f"smt/{fname}", "w") as f:
+
+    smtpath = os.path.join(smt_folder, fname)
+    with open(smtpath, "w") as f:
         f.write("\n".join(lines))
+
 
 def phase1_run(n, solver, start_time):
     """
@@ -114,7 +122,11 @@ def phase1_run(n, solver, start_time):
     """
     fname = f"sts_phase1_{n}.smt2"
     phase1_generate_smt2(n, fname)
-    smtpath = f"smt/{fname}"
+
+    THIS_DIR = os.path.dirname(__file__)
+    smt_folder = os.path.join(THIS_DIR, "smt")
+    smtpath = os.path.join(smt_folder, fname)
+
     timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
     out, t1 = run_solver(solver, smtpath, timeout_left)
     lines = out.strip().splitlines()
@@ -154,28 +166,40 @@ def phase1_run(n, solver, start_time):
 
 def phase2_generate_smt2(n, S0, k, fname):
     P, W = len(S0), len(S0[0])
-    os.makedirs("smt", exist_ok=True)
+
+    # Path robusto: source/SMT/smt/
+    THIS_DIR = os.path.dirname(__file__)
+    smt_folder = os.path.join(THIS_DIR, "smt")
+    os.makedirs(smt_folder, exist_ok=True)
+
     lines = [
         "; phase2: flip-only optimization",
         "(set-logic QF_LIA)",
         "(set-option :produce-models true)"
     ]
+
     for p in range(P):
         for w in range(W):
             lines.append(f"(declare-fun flip_{p}_{w} () Bool)")
+
     for p in range(P):
         for w in range(W):
-            h0,a0 = S0[p][w]
+            h0, a0 = S0[p][w]
             lines.append(f"(define-fun home_eff_{p}_{w} () Int (ite flip_{p}_{w} {a0} {h0}))")
             lines.append(f"(define-fun away_eff_{p}_{w} () Int (ite flip_{p}_{w} {h0} {a0}))")
-    for t in range(1, n+1):
+
+    for t in range(1, n + 1):
         H = " ".join(f"(ite (= home_eff_{p}_{w} {t}) 1 0)" for p in range(P) for w in range(W))
         A = " ".join(f"(ite (= away_eff_{p}_{w} {t}) 1 0)" for p in range(P) for w in range(W))
         lines.append(f"(assert (<= (- (+ {H}) (+ {A})) {k}))")
         lines.append(f"(assert (<= (- (+ {A}) (+ {H})) {k}))")
+
     lines += ["(check-sat)", "(get-model)"]
-    with open(f"smt/{fname}", "w") as f:
+
+    smtpath = os.path.join(smt_folder, fname)
+    with open(smtpath, "w") as f:
         f.write("\n".join(lines))
+
 
 def phase2_run(n, S0, solver, start_time):
     """Binary search on k using only flips, with global timeout.
@@ -187,10 +211,15 @@ def phase2_run(n, S0, solver, start_time):
 
     while low <= high and time.time() - start_time < GLOBAL_TIMEOUT:
         mid = (low + high) // 2
-        fname = f"sts_phase2_{solver}_{n}_{mid}.smt2"
-        phase2_generate_smt2(n, best, mid, fname)
         timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
-        out, _ = run_solver(solver, f"smt/{fname}", timeout_left)
+        fname = f"sts_phase2_n{n}_k{mid}.smt2"
+        phase2_generate_smt2(n, best, mid, fname)
+
+        THIS_DIR = os.path.dirname(__file__)
+        smt_folder = os.path.join(THIS_DIR, "smt")
+        smtpath = os.path.join(smt_folder, fname)
+
+        out, _ = run_solver(solver, smtpath, timeout_left)
         lines = out.strip().splitlines()
 
         if lines and lines[0] == "sat":
