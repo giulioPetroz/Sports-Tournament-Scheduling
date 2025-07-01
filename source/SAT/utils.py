@@ -131,4 +131,3 @@ def format_solution(solution, total_runtime):
         optimal = False
 
     return {"time": int(total_runtime), "optimal": optimal, "obj": obj, "sol": schedule}
-
