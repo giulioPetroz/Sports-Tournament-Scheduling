@@ -1,4 +1,4 @@
-FROM minizinc/minizinc:2.9.1-jammy
+FROM minizinc/minizinc:latest
 
 WORKDIR /cdmo
 

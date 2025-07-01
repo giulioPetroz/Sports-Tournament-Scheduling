@@ -49,8 +49,7 @@ To run the CP model with Gecode solver:
 ```bash
 
 # Run for specific instance size (e.g., N=14)
-minizinc --solver gecode -a --time-limit 300000 -D "n=14;" CP/cp_small.mzn
-
+minizinc --solver cp-sat -a --time-limit 300000 -D "N=14;" source/CP/cp_complete.mzn
 # Run with different instance sizes
 minizinc --solver gecode -a --time-limit 300000 -D "n=16;" CP/cp_small.mzn
 minizinc --solver gecode -a --time-limit 300000 -D "n=18;" CP/cp_small.mzn

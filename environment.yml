@@ -79,3 +79,4 @@ dependencies:
       - pulp==3.1.1
       - pyscipopt==5.5.0
       - z3-solver==4.15.1.0
+      - ortools==9.14.6206
