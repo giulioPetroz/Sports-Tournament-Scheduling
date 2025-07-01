@@ -23,7 +23,6 @@
     - sudo might be required to allow docker to access CPLEX's folder
     - Usage example: `sudo docker run -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo`
 
-
 # CP 
 
 ## Current Results
