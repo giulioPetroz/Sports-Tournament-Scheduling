@@ -1,4 +1,3 @@
-FROM ubuntu:latest
 FROM minizinc/minizinc:2.9.1-jammy
 
 WORKDIR /cdmo
@@ -6,7 +5,7 @@ WORKDIR /cdmo
 # Install dependencies
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    curl bzip2 git z3 cvc5 && \
+    curl bzip2 git && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Miniconda
