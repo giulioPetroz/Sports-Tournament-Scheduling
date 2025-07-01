@@ -55,9 +55,8 @@ dependencies:
   - wheel=0.45.1=py311h06a4308_0
   - xz=5.6.4=h5eee18b_1
   - zlib=1.3.1=hb9d3cd8_2
-  - z3-solver
   - tqdm  # se ti serve per logging
-  - requests  # se serve, puoi rimuovere se non usato
+  - requests
   - pip:
       - highspy==1.10.0
       - numpy==2.2.6
