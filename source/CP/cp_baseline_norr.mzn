@@ -38,7 +38,7 @@ array [P, W] of var 0..1: home_away;
 var 1..N div 2 : max_imbalance;
 array [T] of var 1..N-1: home_games;
 
-% Core Tournament Constraints
+% Essential Constraints Only
 
 % Constraint 1: Each period must be used exactly once per week
 constraint forall(w in W)(
@@ -68,26 +68,8 @@ constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
 
-% Symmetry Breaking Constraints
-
-% Break period assignment symmetry using lexicographic ordering
-constraint symmetry_breaking_constraint(
-    lex_greater([matches[p, w] | w in W, p in P], 
-               [matches[p, w] | w in W, p in reverse(P)])
-);
-
-% Fix first match home assignment to break home/away symmetry
-constraint home_away[0, 0] = 0;
-
-% Balance the home/away assignments within each week
-constraint forall(w in W)(
-    abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
-);
-
-% Search Strategy and Optimization
 solve ::
     restart_luby(100) ::
-    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) ::
     seq_search([
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)

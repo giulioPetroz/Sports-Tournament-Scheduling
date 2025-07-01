@@ -87,7 +87,6 @@ constraint forall(w in W)(
 % Search Strategy and Optimization
 solve ::
     restart_luby(100) ::
-    relax_and_reconstruct([matches[p, w] | p in P, w in W], 60) ::
     seq_search([
         int_search([matches[p, w] | p in P, w in W], dom_w_deg, indomain_min, complete),
         int_search([home_away[p, w] | p in P, w in W], first_fail, indomain_min, complete)
