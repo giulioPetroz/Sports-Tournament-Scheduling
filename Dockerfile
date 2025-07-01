@@ -21,7 +21,7 @@ ENV PATH=$CONDA_DIR/bin:$PATH
 COPY environment.yml .
 RUN conda env create -f environment.yml && conda clean --all --yes
 
-ENV CONDA_DEFAULT_ENV=SMT
+ENV CONDA_DEFAULT_ENV=CDMO
 ENV PATH="$CONDA_DIR/envs/${CONDA_DEFAULT_ENV}/bin:$PATH"
 
 # Copy your code
