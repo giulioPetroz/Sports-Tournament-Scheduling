@@ -6,18 +6,18 @@ import os
 # === SETTINGS ===
 
 MODELS = [
-    ("cp_baseline", "source/CP/cp_baseline.mzn"),
-    ("cp_complete", "source/CP/cp_complete.mzn"),
-    ("cp_noIMPL", "source/CP/cp_noIMPL.mzn"),
-    ("cp_noSB", "source/CP/cp_noSB.mzn"),
-    ("cp_baseline_basic", "source/CP/cp_baseline_basic.mzn"),
-    ("cp_complete_basic", "source/CP/cp_complete_basic.mzn"),
-    ("cp_noIMPL_basic", "source/CP/cp_noIMPL_basic.mzn"),
-    ("cp_noSB_basic", "source/CP/cp_noSB_basic.mzn"),
-    ("cp_baseline_no_relnrec", "source/CP/cp_baseline_norr.mzn"),
-    ("cp_complete_no_relnrec", "source/CP/cp_complete_norr.mzn"),
-    ("cp_noIMPL_no_relnrec", "source/CP/cp_noIMPL_norr.mzn"),
-    ("cp_noSB_no_relnrec", "source/CP/cp_noSB_norr.mzn")
+    ("cp_baseline", "../../source/CP/cp_baseline.mzn"),
+    ("cp_complete", "../../source/CP/cp_complete.mzn"),
+    ("cp_noIMPL", "../../source/CP/cp_noIMPL.mzn"),
+    ("cp_noSB", "../../source/CP/cp_noSB.mzn"),
+    ("cp_baseline_basic", "../../source/CP/cp_baseline_basic.mzn"),
+    ("cp_complete_basic", "../../source/CP/cp_complete_basic.mzn"),
+    ("cp_noIMPL_basic", "../../source/CP/cp_noIMPL_basic.mzn"),
+    ("cp_noSB_basic", "../../source/CP/cp_noSB_basic.mzn"),
+    ("cp_baseline_no_relnrec", "../../source/CP/cp_baseline_norr.mzn"),
+    ("cp_complete_no_relnrec", "../../source/CP/cp_complete_norr.mzn"),
+    ("cp_noIMPL_no_relnrec", "../../source/CP/cp_noIMPL_norr.mzn"),
+    ("cp_noSB_no_relnrec", "../../source/CP/cp_noSB_norr.mzn")
 ]
 
 SOLVERS = ["gecode", "chuffed", "cp-sat"]
