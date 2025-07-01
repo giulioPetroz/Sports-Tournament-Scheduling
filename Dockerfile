@@ -17,6 +17,14 @@ RUN curl -LO "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64
 
 ENV PATH=$CONDA_DIR/bin:$PATH
 
+# Install CVC5
+RUN apt-get update && apt-get install -y unzip && \
+    curl -L -o /tmp/cvc5.zip https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.0/cvc5-Linux-x86_64-static.zip && \
+    unzip /tmp/cvc5.zip -d /tmp/cvc5 && \
+    mv /tmp/cvc5/cvc5-Linux-x86_64-static/bin/cvc5 /usr/local/bin/cvc5 && \
+    chmod +x /usr/local/bin/cvc5 && \
+    rm -rf /tmp/cvc5 /tmp/cvc5.zip
+
 # Copy environment.yml and install env
 COPY environment.yml .
 RUN conda env create -f environment.yml && conda clean --all --yes
