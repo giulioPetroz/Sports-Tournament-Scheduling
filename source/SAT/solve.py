@@ -85,14 +85,14 @@ def solve_satisfy(rb, n, teams, weeks, periods, solver_mod_name, solver_params):
         Symmetry breaking: fix the first match as scheduled by the round robin tournament
     """
 
-    s_sat.add(
-        solver.And(
-            *(
-                [matches_schedule[0][0][0]]
-                + [solver.Not(matches_schedule[0][0][p]) for p in periods[1:]]
-            )
-        )
-    )
+    # s_sat.add(
+    #     solver.And(
+    #         *(
+    #             [matches_schedule[0][0][0]]
+    #             + [solver.Not(matches_schedule[0][0][p]) for p in periods[1:]]
+    #         )
+    #     )
+    # )
 
     """
         Every team plays at most once a week
