@@ -87,7 +87,7 @@ for solver_name in solvers:
             continue
 
     if solution:
-        sat_runtime = solution[1]
+        sat_schedule, sat_runtime = solution[0], solution[1]
         print(f"{solver_name}: solve_satisfy in {sat_runtime:.4f}s")
 
         # Balance the number of times each team plays at home and away starting from
@@ -97,7 +97,7 @@ for solver_name in solvers:
             result = pool.apply_async(
                 solve_optimize,
                 (
-                    rb,
+                    sat_schedule,
                     n,
                     teams,
                     weeks,
