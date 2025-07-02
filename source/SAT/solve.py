@@ -85,14 +85,14 @@ def solve_satisfy(rb, n, teams, weeks, periods, solver_mod_name, solver_params):
         Symmetry breaking: fix the first match as scheduled by the round robin tournament
     """
 
-    s_sat.add(
-        solver.And(
-            *(
-                [matches_schedule[0][0][0]]
-                + [solver.Not(matches_schedule[0][0][p]) for p in periods[1:]]
-            )
-        )
-    )
+    # s_sat.add(
+    #     solver.And(
+    #         *(
+    #             [matches_schedule[0][0][0]]
+    #             + [solver.Not(matches_schedule[0][0][p]) for p in periods[1:]]
+    #         )
+    #     )
+    # )
 
     """
         Every team plays at most once a week
@@ -170,16 +170,15 @@ def solve_satisfy(rb, n, teams, weeks, periods, solver_mod_name, solver_params):
 
 
 def solve_optimize(
-    rb, n, teams, weeks, periods, sat_solution, solver_mod_name, solver_params
+    sat_schedule, n, teams, weeks, periods, sat_solution, solver_mod_name, solver_params
 ):
     """
     Solves STS optimization
 
     Parameters:
     -----------
-    rb : list of lists of tuples
-        The round-robin structure that maps [position][week] to a tuple of team indices,
-        representing the match to be played (e.g., rb[t][w] = (team_i, team_j)).
+    sat_schedule : list of lists of tuples
+        Scheduled tournament: Note the teams are numbered in [1,n]
 
     n : int
         number of teams
@@ -260,7 +259,9 @@ def solve_optimize(
                 s_opt.add(
                     Iff(
                         slots_schedule[p][w],
-                        matches_to_slots[rb[p][w][0]][rb[p][w][1]],
+                        matches_to_slots[sat_schedule[p][w][0] - 1][
+                            sat_schedule[p][w][1] - 1
+                        ],
                         solver,
                     )
                 )
