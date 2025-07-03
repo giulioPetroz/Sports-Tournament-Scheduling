@@ -1,0 +1,1 @@
+{"CBC": {"time": 300, "optimal": false, "obj": null, "sol": null}, "HiGHS": {"time": 300, "optimal": false, "obj": null, "sol": null}, "CPLEX": {"time": 600, "optimal": false, "obj": null, "sol": null}, "SCIP": {"time": 300, "optimal": false, "obj": null, "sol": null}}
