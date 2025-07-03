@@ -3,42 +3,32 @@ from itertools import combinations
 import os
 import json
 import argparse
+import sys
 
+def get_elements(solution):
 
-def get_elements(solution, list_condition_funct, n=None):
-    elements = []
-    if list_condition_funct(solution, n):
-        elements += solution
-    else:
-        for sol in solution:
-            elements += get_elements(sol, list_condition_funct, n)
-    return elements
+    periods = [s for s in solution]
+    matches = [m for s in periods for m in s]
+    teams = [t for m in matches for t in m]
 
-
-def get_teams(solution):
-    return get_elements(solution, lambda s,n: all([type(i) == int for i in s]))
-
-
-def get_periods(solution, n):
-    return get_elements(solution, lambda s,n: all([type(i) == list and len(i) == n for i in s]), n)
-
-
-def get_matches(solution):
-    return get_elements(solution, lambda s,n: all([type(i) == list and len(i) == 2 and all([type(ii) == int for ii in i]) for i in s]))
+    return periods, matches, teams
 
 
 def get_weeks(periods, n):
     return [[p[i] for p in periods] for i in range(n-1)]
 
 
-def fatal_errors(solution):
+def fatal_errors(solution, obj, time, optimal, teams):
     fatal_errors = []
 
-    if len(solution) == 0:
-        fatal_errors.append('The solution cannot be empty')
+    if len(solution) == 0 and (time != 300 or opt or obj!='None'):
+        fatal_errors.append('The solution cannot be empty!!!')
         return fatal_errors
 
-    teams = get_teams(solution)
+    if type(solution) != list:
+        fatal_errors.append('The solution should be a list!!!')
+        return fatal_errors
+
     n = max(teams)
 
     if any([t not in set(teams) for t in range(1,n+1)]):
@@ -53,42 +43,43 @@ def fatal_errors(solution):
     if any([len(s) != n - 1 for s in solution]):
         fatal_errors.append(f'the number of weeks is not compliant!!!')
 
+    if time > 300:
+        fatal_errors.append(f'The running time exceeds the timeout!!!')
 
     return fatal_errors
 
 
-def check_solution(solution: list):
+def check_solution(solution: list, obj, time, optimal):
 
-    errors = fatal_errors(solution)
+    periods, solution_matches, teams = get_elements(solution)
 
-    if len(errors) == 0:
+    errors = fatal_errors(solution, obj, time, optimal, teams)
 
-        teams = get_teams(solution)
+    if len(errors) == 0 and len(solution) > 0:
+
         n = max(teams)
 
         teams_matches = combinations(set(teams),2)
-        solution_matches = get_matches(solution)
 
         # every team plays with every other teams only once
         if any([solution_matches.count([h,a]) + solution_matches.count([a,h]) > 1 for h,a in teams_matches]):
-            errors.append('There are duplicated matches!!!')
+            errors.append('There are duplicated matches')
 
         # each team cannot play against itself
         if any([h==a for h,a in solution_matches]):
             errors.append('There are self-playing teams')
 
-        periods = get_periods(solution, n - 1)
         weeks = get_weeks(periods, n)
 
         # every team plays once a week
-        teams_per_week = [get_teams(i) for i in weeks]
+        teams_per_week = [[j for i in w for j in i] for w in weeks]
         if any([len(tw) != len(set(tw)) for tw in teams_per_week]):
             errors.append('Some teams play multiple times in a week')
 
-        teams_per_period = [get_teams(p) for p in periods]
+        teams_per_period = [[j for i in p for j in i] for p in periods]
 
         # every team plays at most twice during the period
-        if any([teams_per_period.count(tp) > 2 for tp in teams_per_period]):
+        if any([any([tp.count(elem) > 2 for elem in tp]) for tp in teams_per_period]):
             errors.append('Some teams play more than twice in the period')
 
     return 'Valid solution' if len(errors) == 0 else errors
@@ -114,9 +105,14 @@ if __name__ == '__main__':
     for f in filter(lambda x: x.endswith('.json'), os.listdir(directory)):
         json_data = load_json(f'{directory}/{f}')
 
+        print(f'File: {f}\n')
         for approach, result in json_data.items():
             sol = result.get("sol")
-            print(sol)
-            message = check_solution(sol)
+            time = result.get("time")
+            opt = result.get("optimal")
+            obj = result.get("obj")
+
+            message = check_solution(sol, obj, time, opt)
             status = "VALID" if type(message) == str else "INVALID"
-            print(f"Approach: {approach}  Status: {status}  Reason: {message if status == 'VALID' else ' '.join(message)}")
+            message_str = '\n\t  '.join(message)
+            print(f"  Approach: {approach}\n    Status: {status}\n    Reason: {message if status == 'VALID' else message_str}\n")

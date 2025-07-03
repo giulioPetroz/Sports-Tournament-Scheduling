@@ -187,7 +187,7 @@ for solver_id in solvers:
                 "time": timeout,
                 "optimal": False,
                 "obj": None,
-                "sol": None,
+                "sol": [],
             }
         case "Infeasible":
             result[solver_id] = {
