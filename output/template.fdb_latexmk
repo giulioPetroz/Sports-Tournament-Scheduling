@@ -1,0 +1,27 @@
+# Fdb version 4
+["pdflatex"] 1751625354.14961 "template.tex" "output/template.pdf" "template" 1751625354.3039 0
+  "/usr/share/texmf-dist/fonts/map/fontname/texfonts.map" 1742685315 3524 cb3e574dea2d1052e39280babc910dc8 ""
+  "/usr/share/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm" 1742685315 1328 c834bbb027764024c09d3d2bf908b5f0 ""
+  "/usr/share/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm" 1742685315 1324 c910af8c371558dc20f2d7822f66fe64 ""
+  "/usr/share/texmf-dist/fonts/tfm/public/cm/cmr12.tfm" 1742685315 1288 655e228510b4c2a1abe905c368440826 ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1742685315 34811 78b52f49e893bcba91bd7581cdc144c0 ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb" 1742685315 32080 340ef9bf63678554ee606688e7b5339d ""
+  "/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1742685315 35752 024fb6c41858982481f6968b5fc26508 ""
+  "/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty" 1742685315 2222 2166a1f7827be30ddc30434e5efcee1b ""
+  "/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty" 1742685315 4173 d22509bc0c91281d991b2de7c88720dd ""
+  "/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty" 1742685315 88370 c780f23aea0ece6add91e09b44dca2cd ""
+  "/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty" 1742685315 4474 23ca1d3a79a57b405388059456d0a8df ""
+  "/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty" 1742685315 2444 71618ea5f2377e33b04fb97afdd0eac2 ""
+  "/usr/share/texmf-dist/tex/latex/base/article.cls" 1742685315 20144 63d8bacaf52e5abf4db3bc322373e1d4 ""
+  "/usr/share/texmf-dist/tex/latex/base/size10.clo" 1742685315 8448 5cf247d4bd0c7d5d711bbbdf111fae2e ""
+  "/usr/share/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def" 1742685315 29785 9f93ab201fe5dd053afcc6c1bcf7d266 ""
+  "/usr/share/texmf-dist/web2c/texmf.cnf" 1742685315 42087 b0f9697c952c8f5a8eede4134282cb0d ""
+  "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1751620756 5311557 9da84c45f5b388655502706482323571 ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1751620722 2008238 e973bcd6607b995f536c9603121d1ed8 ""
+  "output/template.aux" 1751625354.28125 831 01765a2b7ea5f3633c0e5890ebbaf325 "pdflatex"
+  "template.tex" 1751625352.7879 1181 8af200f9eea73275ca6860f5183a5d9d ""
+  (generated)
+  "output/template.aux"
+  "output/template.log"
+  "output/template.pdf"
+  (rewritten before read)
