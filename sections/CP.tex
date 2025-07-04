@@ -3,10 +3,17 @@
 This model utilizes two primary decision variables to construct the tournament schedule and assign home/away teams for each match.
 
 \subsubsection{\text{matches}}
-The variable $\text{matches}_{p, w} \in [0, \dots, \frac{N}{2} - 1]$ for $p \in P, w \in W$, determines which match from the predefined round-robin structure ($\text{rb}$) is scheduled in week $w$ and period $p$.
+% For $p \in P, w \in W$, $matches_{p, w} = m \in M$ determines that $rb_{m, w}$ is scheduled in week $w$ and period $p$.
+
+For each period $p \in P$ and week $w \in W$
+$$
+matches_{p,w}=m \in M
+$$
+determines that $rb_{m, w}$ is scheduled in week $w$ and period $p$.
+
 
 \subsubsection{\text{home\_away}}
-The binary variable $\text{home\_away}_{p, w} \in \{0, 1\}$ for $p \in P, w \in W$, assigns the home team for the match scheduled at period $p$ in week $w$. Specifically, $\text{home\_away}_{p, w} = 0$ means the first team listed in the match plays at home, while $\text{home\_away}_{p, w} = 1$ means the second team plays at home.
+For each $p \in P$ and week $w \in W$, $home\_away_{p, w} \in \{0, 1\}$, assigns the home team for the match scheduled at period $p$ in week $w$. Specifically, $\text{home\_away}_{p, w} = 0$ means the first team listed in the match plays at home, while $\text{home\_away}_{p, w} = 1$ means the second team plays at home.
 
 \subsection{Auxiliary Variables}
 \subsubsection{\text{home\_games}}
@@ -39,22 +46,22 @@ These constraints are strictly necessary for defining a feasible round-robin sch
     \[ \forall w \in W : \texttt{all\_different}([\texttt{matches}[p, w] \mid p \in P]) \]
 
     \item \textbf{Each team plays at most twice per period:} 
+    % TODO explain the implementation please!
 \[ \forall p \in P, \forall t \in T : \left| \{ (w, s) \mid w \in W, s \in S, \text{rb}_{\text{matches}_{p, w}, w, s} = t \} \right| \leq 2 \]
 
+\end{enumerate}
+
+\subsubsection{Channeling Constraints}
+\begin{enumerate}
  \item \textbf{Calculation of Home Games:} This constraint defines the value of $\text{home\_games}_{t}$.
 \[ \forall t \in T : \text{home\_games}_{t} = \sum_{p \in P, w \in W, s \in S} \mathbb{I}\left( \text{rb}_{\text{matches}_{p, w}, w, s} = t \land \text{home\_away}_{p, w} = s \right) \]
 The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if team $t$ is located in slot $s$ and that slot $s$ is designated as the home slot by $\text{home\_away}_{p,w}$.
-
-
-
-    \item \textbf{Fairness - balance home and away games:} This constraint directly links the calculated $\text{home\_games}$ for each team to the objective variable $\text{max\_imbalance}$. For a detailed explanation of this relationship and the definition of $\text{max\_imbalance}$, please refer to Section \ref{objective} (Objective Variable and Objective Function).
-    
-    
 \end{enumerate}
 
 \subsubsection{Implied Constraints}
-
+% TODO: explain relationship with all_different
 \begin{enumerate}
+    % TODO explain the implementation please!
     \item \textbf{Each team appears exactly once per week:}
     \[ \forall w \in W, \forall t \in T : \left| \{ (p, s) \mid p \in P, s \in S, \text{rb}_{\text{matches}_{p, w}, w, s} = t \} \right| = 1 \]
 \end{enumerate}
@@ -69,6 +76,7 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
     \item \textbf{Fix first match home assignment to break home/away symmetry:} This constraint eliminates global home/away assignment symmetry by fixing the home/away status of the first match.
     \[ \text{home\_away}_{0, 0} = 0 \]
 
+% TODO: move to Optimization
 \item \textbf{Balance the home/away assignments within each week:} While not a strict symmetry breaking constraint, this constraint helps reduce the search space by ensuring that within each week $w$, the number of matches where the second team plays at home ($\text{home\_away}_{p, w}=1$) is roughly half of the total matches ($|P|$), with a maximum deviation of 1:
 \[ \forall w \in W : \left| \sum_{p \in P} \text{home\_away}_{p, w} - \left\lfloor \frac{|P|}{2} \right\rfloor \right| \leq 1 \]
 This guides the solver towards balanced assignments and prunes highly imbalanced weekly configurations.

@@ -10,11 +10,11 @@
 \author{
   Cirone Cono, \texttt{cono.cirone@studio.unibo.it}
   \and
-  Dardini Jacopo, \texttt{first2.last2@xxxxx.com}
+  Dardini Jacopo, \texttt{jacopo.dardini@studio.unibo.it}
   \and
   Formichella Gio, \texttt{gio.formichella@studio.unibo.it}
   \and
-  Petrozziello Giulio, \texttt{first2.last2@xxxxx.com}
+  Petrozziello Giulio, \texttt{giulio.petrozziello@studio.unibo.it} 
 }
 \date{}
 
@@ -24,15 +24,30 @@
 
 
 \section{Introduction}
-In this project we tackle the sport scheduling problem with CP, SAT, SMT and MIP, and apply with all 4 technologies the common approach described in \cite{10.1007/10704567_6}. All implementations take as input the number of teams in the tournament and start by precomputing the weekly matchups for the round-robin tournament; the matchups are stored in a matrix indexed by weeks and periods. The precomputation cost is minimal, for all tested team sizes the precomputation required less than a second. The matchup matrix not only speeds up the search by reducing the problem to ordering matchups, but also guarantees that the constraints of each team playing each other and playing once a week are satisfied. With all four techniques, we aim to find a solution satisfying the constraints and minimizing the objective variable D, the maximum difference between games played at home and away for a team; $D\in [1, n-1]$, where n is the number of teams. 
+% Add book reference
+% Add complexity reduction analysis
+In this project we tackle the sport scheduling problem with CP, SAT, SMT and MIP, and apply with all 4 technologies the common approach inspired by \cite{10.1007/10704567_6}. All implementations take as input the number of teams in the tournament and start by precomputing the weekly matchups for the round-robin tournament. The precomputation cost is minimal, for all tested team sizes the precomputation required less than a second. The matchup matrix not only speeds up the search by reducing the problem to ordering matchups, but also guarantees that the constraints of each team playing each other and playing once a week are satisfied. With all four techniques, we aim to find a solution satisfying the constraints and minimizing the objective variable D, the maximum difference between games played at home and away for a team; $D\in [1, n-1]$, where n is the number of teams.
+
+\subsection{Notation}
+\begin{itemize}
+  \item $N$: number of teams
+  \item $T=\{t\ |\ t \in [1, N]\}$: team identifiers
+  \item $P=\{p\ |\ p \in [0, ..., \frac{N}{2} - 1]\}$: period identifiers
+  \item $M=\{m\ |\ m \in [0, ..., \frac{N}{2} - 1]\}$: weekly matchup identifiers
+  \item $W=\{w\ |\ w \in [0, ..., N-2]\}$: week identifiers
+  \item $S=\{s\ |\ s \in [0,1]\}$: slot identifiers, where $s=0$ corresponds to playing at home and $s=1$ to playing away
+  \item $rb_{m, w, s}=t$: team $t$ plays in week $w$ in match $m$ in slot $s$.
+  % \item $m=rb_{p, w}$ is the match $(t_1, t_2)$ in period $p$ of week $w$, where $t_1$ plays at home and $t_2$ plays away
+  
+\end{itemize}
 
 \include{sections/CP}
-
-\include{sections/MIP}
 
 \include{sections/SAT}
 
 \include{sections/SMT}
+
+\include{sections/MIP}
 
 \bibliographystyle{unsrt}
 \bibliography{ref.bib}
