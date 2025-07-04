@@ -61,16 +61,6 @@ The optimal $k^*$ is found via binary search over the feasible imbalance bounds.
     \Big).
     \]
     \item \textbf{Period limit:} each team appears at most twice in the same period across all weeks.
-    \[
-    \forall\, t \in T,\; \forall\, p \in P:\quad
-    \sum_{w \in W}
-    \sum_{m \in M}
-    \big(
-      [\, rb_{m,w,0} = t \vee rb_{m,w,1} = t\, ]
-      \cdot [\, matches_{p,w} = m\, ]
-    \big)
-    \leq 2.
-    \]
     \item \textbf{Symmetry breaking:} fix the first pair in the first slot: $\mathit{index}_{0,0,0} = \text{true}$.
 \end{itemize}
 
