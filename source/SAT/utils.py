@@ -1,6 +1,3 @@
-import math
-
-
 def gen_var_id():
     """
     Natural number generator (see sat_encodings.py)
@@ -106,13 +103,15 @@ def format_solution(solution, total_runtime):
 
     Parameters:
     -----------
-    solution : tuple
-        - {sat|opt}_schedule : list of lists
-            schedule {satisfying|optimizing} STS problem
-        - runtime : float
-            runtime of {solve_satisfy|solve_optimize} solution (to be ignored)
-        - obj : int|None
-            value of objective function. None when the solution isn't optimized
+    solution : tuple | None
+        If a solution is found:
+            - {sat|opt}_schedule : list of lists
+                schedule {satisfying|optimizing} STS problem
+            - runtime : float
+                runtime of {solve_satisfy|solve_optimize} solution (to be ignored)
+            - obj : int|None
+                value of objective function. None when the solution isn't optimized
+        Otherwise None
 
     total_runtime : float
         - total runtime for solve_satisfy and solve_optimize
@@ -122,6 +121,9 @@ def format_solution(solution, total_runtime):
     dictionary containing the formatted results
     """
 
+    if solution is None:
+        return {"time": int(300), "optimal": False, "obj": None, "sol": []}
+
     schedule, _, obj = solution
     # If the value of the optimization is maximum,
     # set optimal to True
@@ -129,5 +131,6 @@ def format_solution(solution, total_runtime):
         optimal = True
     else:
         optimal = False
+        total_runtime = int(300)
 
     return {"time": int(total_runtime), "optimal": optimal, "obj": obj, "sol": schedule}
