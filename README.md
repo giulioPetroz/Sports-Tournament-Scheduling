@@ -117,3 +117,32 @@ minizinc --solver chuffed --time-limit 300000 -D "N=18;" source/CP/cp_noSB_norr.
 | `-D "N=X"` | Number of teams in the tournament (must be even) |
 
 _(Example: `-D "N=8"`)_
+
+# MIP
+
+## Running the Models
+
+### Complete Experimental Replication
+To reproduce all experiments presented in the report:
+
+```bash
+python3 run_mip_experiment.py
+```
+### Indivdual Model Execution: 
+To run a specific model configuration: 
+```bash 
+# General syntax
+python source/MIP/model.py--teams {TEAMS} --solvers {SOLVERS} --timeout {TIME_S}
+```
+```bash 
+# E.G.
+python source/MIP/model.py --teams 6 --solvers CBC HiGHS CPLEX SCIP --timeout 300
+```
+
+## Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+|`--teams` | Number of teams in the tournament (expected even number) |
+| `--solvers` | Solvers to use (`CBC`, `HiGHS`, `CPLEX` or `SCIP`) |
+| `--time-limit` | Time limit in seconds (e.g., `300` = 5 minutes) |
