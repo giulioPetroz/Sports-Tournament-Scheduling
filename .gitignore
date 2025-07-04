@@ -1,1 +1,6 @@
-*__pycache__/
+*.aux
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out

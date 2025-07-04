@@ -1,9 +1,10 @@
-% This section describes our SMT approach for the Sports Tournament Scheduling (STS) problem, modeled using the Quantifier-Free Linear Integer Arithmetic (QF\_LIA) theory and solved with Z3 and CVC5.
-% The approach is divided into two phases.
+\section{SMT}
+This section describes our SMT approach for the Sports Tournament Scheduling (STS) problem, modeled using the Quantifier-Free Linear Integer Arithmetic (QF\_LIA) theory and solved with Z3 and CVC5.
+The approach is divided into two phases.
 
-% In \textbf{Phase~1}, we generate a feasible schedule by selecting a valid assignment of precomputed matches to each slot. Weekly matches are determined in advance using the standard round-robin method. The feasibility constraints ensure that each slot contains exactly one valid pair, each pair is used exactly once, and every team respects participation limits.
+In \textbf{Phase~1}, we generate a feasible schedule by selecting a valid assignment of precomputed matches to each slot. Weekly matches are determined in advance using the standard round-robin method. The feasibility constraints ensure that each slot contains exactly one valid pair, each pair is used exactly once, and every team respects participation limits.
 
-% In \textbf{Phase~2}, we optimize the feasible solution by balancing the number of home and away games for each team. This is done by introducing flip variables that can invert the home and away teams in each match to reduce imbalance. Each phase is encoded in a separate \texttt{.smt2} file: the first finds a valid solution, the second refines it by minimizing imbalance.
+In \textbf{Phase~2}, we optimize the feasible solution by balancing the number of home and away games for each team. This is done by introducing flip variables that can invert the home and away teams in each match to reduce imbalance. Each phase is encoded in a separate \texttt{.smt2} file: the first finds a valid solution, the second refines it by minimizing imbalance.
 
 \subsection{Decision Variables}
 
