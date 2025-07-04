@@ -73,7 +73,8 @@ for solver_name in solvers:
 
     # Find basic schedule without scheduling the slots by calling solve_satisfy
     # using a child process.
-    # If the solution isn't found within the time limit, try the next solver_name
+    # If the solution isn't found within the time limit, save empty results and
+    # try the next solver_name
     with Pool(1) as pool:
         result = pool.apply_async(
             solve_satisfy,
@@ -84,7 +85,7 @@ for solver_name in solvers:
             solution = result.get(timeout=timeout)
         except TimeoutError:
             print(f"{solver_name}: Timeout for satisfiability")
-            continue
+            solution = None
 
     if solution:
         sat_schedule, sat_runtime = solution[0], solution[1]
@@ -120,8 +121,9 @@ for solver_name in solvers:
 
         total_runtime += sat_runtime
 
+        print(f"{solver_name}: total runtime {total_runtime:.4f}s", end="\n\n")
+
     # Save results for current solver
-    print(f"{solver_name}: total runtime {total_runtime:.4f}s", end="\n\n")
     results[solver_name] = format_solution(solution, total_runtime)
 
 # Dump results to n.json, n being the number of teams
