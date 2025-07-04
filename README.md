@@ -1,55 +1,120 @@
-# Docker instructions
+# Docker Instructions
 
-# To build docker image from dockerfile:
+## 1. Build the Docker image
 
-    `docker build -t cdmo .`
-    docker build --platform linux/amd64 -t cdmo .
-
-# To run container:
-
-    `docker run -it cdmo`
-    docker run --platform linux/amd64  -it cdmo
-
-# Close container:
-
-    `exit`
-
-## To run container with the CPLEX solver:
-- ensure CPLEX 22.1.1 is installed on device with a valid license, the solver will be mounted at runtime
-- run container with:
-
-    `sudo docker run -v /user/path/to/cplex:/opt/ibm/ILOG/ -it cdmo`
-    
-    - sudo might be required to allow docker to access CPLEX's folder
-    - Usage example: `sudo docker run -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo`
-
-
-# CP 
-
-## Current Results
-
-### CP Model Performance (`cp_small`)
-- **N ≤ 16**: Successfully finds **optimal solutions** (max_imbalance = 1) within time limit
-- **N = 18**: Currently **fails to find any solution** within 5-minute time limit
-- **N ≥ 20**: Not yet tested
-
-### Model Features
-- Round-robin tournament structure with proper constraints
-- Home/away fairness optimization (minimize maximum imbalance across teams)
-- Advanced search strategies including:
-  - Luby restart sequences
-  - Relax-and-reconstruct techniques
-- Symmetry breaking constraints
-- Auxiliary variables for improved constraint propagation
-
-## Running the Model
-
-To run the CP model with Gecode solver:
+If you are building on an **ARM-based machine** (e.g., Apple Silicon Mac), you **must** specify the target architecture to ensure compatibility with `x86_64` (AMD64).
+Use `--platform linux/amd64` to replicate an `x86_64` environment.
 
 ```bash
+# If you are on an x86_64 machine:
+docker build -t cdmo .
 
-# Run for specific instance size (e.g., N=14)
-minizinc --solver cp-sat -a --time-limit 300000 -D "N=14;" source/CP/cp_complete.mzn
-# Run with different instance sizes
-minizinc --solver gecode -a --time-limit 300000 -D "n=16;" CP/cp_small.mzn
-minizinc --solver gecode -a --time-limit 300000 -D "n=18;" CP/cp_small.mzn
+# Build with x86_64 emulation (for ARM hosts)
+docker build --platform linux/amd64 -t cdmo .
+```
+
+---
+
+## 2. Run the container
+
+Again, if you’re on ARM, specify `--platform`:
+
+```bash
+# Or, on native x86_64:
+docker run -it cdmo
+
+# Run with x86_64 emulation (for ARM hosts)
+docker run --platform linux/amd64 -it cdmo
+```
+
+To close the container:
+
+```bash
+exit
+```
+
+---
+
+## 3. Run the container with the CPLEX solver
+
+* Make sure **CPLEX 22.1.1** is installed on your device with a valid license.
+* The local CPLEX directory will be mounted into the container at runtime.
+* You may need `sudo` to allow Docker to access the mounted folder.
+
+Example usage:
+
+```bash
+sudo docker run -v /user/path/to/cplex:/opt/ibm/ILOG/ -it cdmo
+```
+
+Example with default install path:
+
+```bash
+sudo docker run -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo
+```
+
+Example usage ARM:
+
+```bash
+sudo docker run --platform linux/amd64 -v /user/path/to/cplex:/opt/ibm/ILOG/ -it cdmo
+```
+
+Example with default install path ARM:
+
+```bash
+sudo docker run --platform linux/amd64 -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo
+```
+
+---
+
+# CP 
+# Constraint Programming (CP)
+
+## Model Variants
+
+The `source/CP/` directory contains different model implementations with varying constraint sets:
+
+### Core Models
+- **`cp_baseline`**: Contains only the essential constraints required to generate a valid tournament schedule
+- **`cp_noIMPL`**: Baseline model enhanced with symmetry breaking constraints
+- **`cp_noSB`**: Baseline model enhanced with implied constraints for improved propagation
+- **`cp_complete`**: Full model incorporating symmetry breaking constraints and implied constraints
+
+### Search Strategy Variants
+Each core model has three search strategy implementations:
+
+- **`{model_name}_basic`**: Uses the solver's default search strategy
+- **`{model_name}_norr`**: Implements sequential variable ordering with Luby restart sequences (without relax-and-reconstruct)
+- **`{model_name}`**: Advanced search strategy with sequential ordering, Luby restarts, and relax-and-reconstruct techniques
+
+
+## Running the Models
+
+### Complete Experimental Replication
+To reproduce all experiments presented in the report:
+
+```bash
+python3 run_cp_experiment.py
+```
+### Indivdual Model Execution: 
+To run a specific model configuration: 
+```bash 
+# General syntax
+minizinc --solver {SOLVER} --time-limit {TIME_MS} -D "N={TEAMS};" source/CP/{MODEL_FILE}.mzn
+
+# Available solvers: gecode, chuffed, cp-sat
+# Examples:
+minizinc --solver gecode --time-limit 300000 -D "N=16;" source/CP/cp_complete.mzn
+minizinc --solver cp-sat --time-limit 300000 -D "N=14;" source/CP/cp_baseline_basic.mzn
+minizinc --solver chuffed --time-limit 300000 -D "N=18;" source/CP/cp_noSB_norr.mzn
+```
+
+## Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `--solver` | Solver to use (`gecode`, `chuffed`, or `cp-sat`) |
+| `--time-limit` | Time limit in milliseconds (e.g., `300000` = 5 minutes) |
+| `-D "N=X"` | Number of teams in the tournament (must be even) |
+
+_(Example: `-D "N=8"`)_

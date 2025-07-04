@@ -3,7 +3,7 @@ import os
 
 # === CONFIG ===
 N_LIST = [6, 8, 10, 12, 14, 16, 18, 20, 22]
-JSON_DIR = "../../res/CP"
+JSON_DIR = "res/CP"
 
 # Model groups
 STRATEGIES = {

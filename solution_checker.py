@@ -4,7 +4,15 @@ import os
 import json
 import argparse
 import sys
+import sys
 
+def get_elements(solution):
+
+    periods = [s for s in solution]
+    matches = [m for s in periods for m in s]
+    teams = [t for m in matches for t in m]
+
+    return periods, matches, teams
 def get_elements(solution):
 
     periods = [s for s in solution]
@@ -19,6 +27,7 @@ def get_weeks(periods, n):
 
 
 def fatal_errors(solution, obj, time, optimal, teams):
+def fatal_errors(solution, obj, time, optimal, teams):
     fatal_errors = []
 
     if len(solution) == 0 and (time != 300 or opt or obj!='None'):
@@ -27,24 +36,32 @@ def fatal_errors(solution, obj, time, optimal, teams):
 
     if type(solution) != list:
         fatal_errors.append('The solution should be a list!!!')
+    if len(solution) == 0 and (time != 300 or opt or obj!='None'):
+        fatal_errors.append('The solution cannot be empty!!!')
         return fatal_errors
 
-    n = max(teams)
+    if type(solution) != list:
+        fatal_errors.append('The solution should be a list!!!')
+        return fatal_errors
 
-    if any([t not in set(teams) for t in range(1,n+1)]):
-        fatal_errors.append(f'Missing team in the solution or team out of range!!!')
+    if len(solution) > 0:
 
-    if n%2 != 0:
-        fatal_errors.append(f'"n" should be even!!!')
+        n = max(teams)
 
-    if len(solution) != n//2:
-        fatal_errors.append(f'the number of periods is not compliant!!!')
+        if any([t not in set(teams) for t in range(1,n+1)]):
+            fatal_errors.append(f'Missing team in the solution or team out of range!!!')
 
-    if any([len(s) != n - 1 for s in solution]):
-        fatal_errors.append(f'the number of weeks is not compliant!!!')
+        if n%2 != 0:
+            fatal_errors.append(f'"n" should be even!!!')
 
-    if time > 300:
-        fatal_errors.append(f'The running time exceeds the timeout!!!')
+        if len(solution) != n//2:
+            fatal_errors.append(f'the number of periods is not compliant!!!')
+
+        if any([len(s) != n - 1 for s in solution]):
+            fatal_errors.append(f'the number of weeks is not compliant!!!')
+
+        if time > 300:
+            fatal_errors.append(f'The running time exceeds the timeout!!!')
 
     return fatal_errors
 
@@ -52,9 +69,14 @@ def fatal_errors(solution, obj, time, optimal, teams):
 def check_solution(solution: list, obj, time, optimal):
 
     periods, solution_matches, teams = get_elements(solution)
+def check_solution(solution: list, obj, time, optimal):
+
+    periods, solution_matches, teams = get_elements(solution)
 
     errors = fatal_errors(solution, obj, time, optimal, teams)
+    errors = fatal_errors(solution, obj, time, optimal, teams)
 
+    if len(errors) == 0 and len(solution) > 0:
     if len(errors) == 0 and len(solution) > 0:
 
         n = max(teams)
@@ -63,6 +85,7 @@ def check_solution(solution: list, obj, time, optimal):
 
         # every team plays with every other teams only once
         if any([solution_matches.count([h,a]) + solution_matches.count([a,h]) > 1 for h,a in teams_matches]):
+            errors.append('There are duplicated matches')
             errors.append('There are duplicated matches')
 
         # each team cannot play against itself
@@ -73,12 +96,15 @@ def check_solution(solution: list, obj, time, optimal):
 
         # every team plays once a week
         teams_per_week = [[j for i in w for j in i] for w in weeks]
+        teams_per_week = [[j for i in w for j in i] for w in weeks]
         if any([len(tw) != len(set(tw)) for tw in teams_per_week]):
             errors.append('Some teams play multiple times in a week')
 
         teams_per_period = [[j for i in p for j in i] for p in periods]
+        teams_per_period = [[j for i in p for j in i] for p in periods]
 
         # every team plays at most twice during the period
+        if any([any([tp.count(elem) > 2 for elem in tp]) for tp in teams_per_period]):
         if any([any([tp.count(elem) > 2 for elem in tp]) for tp in teams_per_period]):
             errors.append('Some teams play more than twice in the period')
 
@@ -106,6 +132,7 @@ if __name__ == '__main__':
         json_data = load_json(f'{directory}/{f}')
 
         print(f'File: {f}\n')
+        print(f'File: {f}\n')
         for approach, result in json_data.items():
             sol = result.get("sol")
             time = result.get("time")
@@ -113,6 +140,14 @@ if __name__ == '__main__':
             obj = result.get("obj")
 
             message = check_solution(sol, obj, time, opt)
+            time = result.get("time")
+            opt = result.get("optimal")
+            obj = result.get("obj")
+
+            message = check_solution(sol, obj, time, opt)
             status = "VALID" if type(message) == str else "INVALID"
+            message_str = '\n\t  '.join(message)
+            print(f"  Approach: {approach}\n    Status: {status}\n    Reason: {message if status == 'VALID' else message_str}\n")
+
             message_str = '\n\t  '.join(message)
             print(f"  Approach: {approach}\n    Status: {status}\n    Reason: {message if status == 'VALID' else message_str}\n")
