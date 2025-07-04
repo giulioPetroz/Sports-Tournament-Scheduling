@@ -67,7 +67,6 @@ sudo docker run --platform linux/amd64 -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo
 
 ---
 
-# CP 
 # Constraint Programming (CP)
 
 ## Model Variants
