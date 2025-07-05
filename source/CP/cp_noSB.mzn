@@ -68,6 +68,11 @@ constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
 
+% Balance the home/away assignments within each week
+constraint forall(w in W)(
+    abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
+);
+
 % Implied Constraint -> Ensure each team appears exactly once per week
 constraint forall(w in W)(
     global_cardinality([rb[matches[p, w], w, s] | p in P, s in S], 

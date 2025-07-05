@@ -38,7 +38,7 @@ array [P, W] of var 0..1: home_away;
 var 1..N div 2 : max_imbalance;
 array [T] of var 1..N-1: home_games;
 
-% Essential Constraints Only
+% Core Tournament Constraints
 
 % Constraint 1: Each period must be used exactly once per week
 constraint forall(w in W)(
@@ -68,4 +68,18 @@ constraint forall(t in T)(
     abs(2 * home_games[t] - (N-1)) <= max_imbalance
 );
 
+% Balance the home/away assignments within each week
+constraint forall(w in W)(
+    abs(sum(p in P)(home_away[p, w]) - card(P) div 2) <= 1
+);
+
+% Implied Constraint -> Ensure each team appears exactly once per week
+constraint forall(w in W)(
+    global_cardinality([rb[matches[p, w], w, s] | p in P, s in S], 
+                      [t | t in T],             % teams
+                      [1 | t in T],             % minimum: each team once
+                      [1 | t in T])             % maximum: each team once
+);
+
+% Search Strategy and Optimization
 solve minimize max_imbalance;
