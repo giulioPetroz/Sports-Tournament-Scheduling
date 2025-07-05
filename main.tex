@@ -5,6 +5,7 @@
 \usepackage{amssymb}
 \usepackage{hyperref}
 \usepackage{float} % Table placement
+\usepackage{bbm}
 
 \title{Combinatorial Decision Making And Optimization}
 \author{
@@ -26,7 +27,7 @@
 \section{Introduction}
 % Add book reference
 % Add complexity reduction analysis
-In this project we tackle the sport scheduling problem with CP, SAT, SMT and MIP, and apply with all 4 technologies the common approach inspired by \cite{10.1007/10704567_6}. All implementations take as input the number of teams in the tournament and start by precomputing the weekly matchups for the round-robin tournament. The precomputation cost is minimal, for all tested team sizes the precomputation required less than a second. The matchup matrix not only speeds up the search by reducing the problem to ordering matchups, but also guarantees that the constraints of each team playing each other and playing once a week are satisfied. With all four techniques, we aim to find a solution satisfying the constraints and minimizing the objective variable D, the maximum difference between games played at home and away for a team; $D\in [1, n-1]$, where n is the number of teams.
+In this project, we tackle the sports scheduling problem using CP, SAT, SMT, and MIP, applying a common approach inspired by \cite{10.1007/10704567_6} across all four technologies. All implementations take as input the number of teams in the tournament and start by precomputing the weekly matchups for the round-robin tournament. The precomputation cost is minimal, for all tested team sizes the precomputation required less than a second. The matchup matrix not only speeds up the search by reducing the problem to ordering matchups, but also guarantees that the constraints of each team playing each other and playing once a week are satisfied. With all four techniques, we aim to find a solution satisfying the constraints and minimizing the objective variable D, the maximum difference between games played at home and away for a team; $D\in [1, n-1]$, where n is the number of teams.
 
 \subsection{Notation}
 \begin{itemize}
