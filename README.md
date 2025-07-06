@@ -146,3 +146,36 @@ python source/MIP/model.py --teams 6 --solvers CBC HiGHS CPLEX SCIP --timeout 30
 |`--teams` | Number of teams in the tournament (expected even number) |
 | `--solvers` | Solvers to use (`CBC`, `HiGHS`, `CPLEX` or `SCIP`) |
 | `--time-limit` | Time limit in seconds (e.g., `300` = 5 minutes) |
+
+# SMT
+
+## Running the Models
+
+### Complete Experimental Replication
+To reproduce all experiments presented in the report:
+
+```bash
+python3 run_smt_experiments.py
+```
+### Indivdual Model Execution: 
+To run a specific model configuration: 
+```bash 
+# General syntax
+python source/SMT/model.py --teams {TEAMS} --solver {SOLVER}
+```
+```bash 
+# E.G.
+python source/MIP/model.py --teams 6 --solver z3
+```
+
+## Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+|`--teams` | Number of teams in the tournament (expected even number) |
+| `--solver` | Solver to use (`z3` or `cvc5`) |
+
+
+
+
+
