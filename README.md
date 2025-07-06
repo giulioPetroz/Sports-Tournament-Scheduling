@@ -176,6 +176,34 @@ python source/SMT/model.py --teams 6 --solver z3
 | `--solver` | Solver to use (`z3` or `cvc5`) |
 
 
+# SAT
+
+## Running the Models
+
+### Complete Experimental Replication
+To reproduce all experiments presented in the report:
+
+```bash
+python3 run_sat_experiments.py
+```
+### Indivdual Model Execution: 
+To run a specific model configuration: 
+```bash 
+# General syntax
+python source/SAT/model.py--teams {TEAMS} --solvers {SOLVERS} --timeout {TIME_S}
+```
+```bash 
+# E.G.
+python source/SAT/model.py --teams 6 --solvers z3 minisat cadical --timeout 300
+```
+
+## Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+|`--teams` | Number of teams in the tournament (expected even number) |
+| `--solvers` | Solvers to use (`z3`, `minisat`, `cadical`) |
+| `--time-limit` | Time limit in seconds (e.g., `300` = 5 minutes) |
 
 
 
