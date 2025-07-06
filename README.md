@@ -190,7 +190,7 @@ python3 run_sat_experiments.py
 To run a specific model configuration: 
 ```bash 
 # General syntax
-python source/SAT/model.py--teams {TEAMS} --solvers {SOLVERS} --timeout {TIME_S}
+python source/SAT/model.py --teams {TEAMS} --solvers {SOLVERS} --timeout {TIME_S}
 ```
 ```bash 
 # E.G.
