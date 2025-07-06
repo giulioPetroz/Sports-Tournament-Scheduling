@@ -161,11 +161,11 @@ python3 run_smt_experiments.py
 To run a specific model configuration: 
 ```bash 
 # General syntax
-python source/SMT/model.py --teams {TEAMS} --solver {SOLVER}
+python source/SMT/model.py --teams {TEAMS} --solver {SOLVER} --time-limit {TIME_S}
 ```
 ```bash 
 # E.G.
-python source/SMT/model.py --teams 6 --solver z3
+python source/SMT/model.py --teams 6 --solver z3 --time-limit 50
 ```
 
 ## Parameters
@@ -174,6 +174,7 @@ python source/SMT/model.py --teams 6 --solver z3
 |-----------|-------------|
 |`--teams` | Number of teams in the tournament (expected even number) |
 | `--solver` | Solver to use (`z3` or `cvc5`) |
+| `--time-limit` | Time limit in seconds (e.g., `300` = 5 minutes) |
 
 
 # SAT
