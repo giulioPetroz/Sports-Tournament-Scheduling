@@ -93,7 +93,7 @@ Each core model has three search strategy implementations:
 To reproduce all experiments presented in the report:
 
 ```bash
-python3 run_cp_experiment.py
+python3 run_cp_experiments.py
 ```
 ### Indivdual Model Execution: 
 To run a specific model configuration: 
