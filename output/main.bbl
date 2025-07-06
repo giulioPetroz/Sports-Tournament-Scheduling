@@ -5,4 +5,14 @@ P.~Van~Hentenryck, L.~Michel, L.~Perron, and J.~C. R{\'e}gin.
 \newblock Constraint programming in opl.
 \newblock In Gopalan Nadathur, editor, {\em Principles and Practice of Declarative Programming}, pages 98--116, Berlin, Heidelberg, 1999. Springer Berlin Heidelberg.
 
+\bibitem{Dinitz2006RoundRobin}
+J.~H. Dinitz, D.~Froncek, E.~R. Lamken, and W.~D. Wallis.
+\newblock Scheduling a tournament.
+\newblock In Charles~J. Colbourn and Jeffrey~H. Dinitz, editors, {\em Handbook of Combinatorial Designs}, pages 591--598, Boca Raton, FL, 2006. CRC Press.
+
+\bibitem{Lamken2006BalancedTournamentDesigns}
+E.~R. Lamken.
+\newblock Balanced tournament designs.
+\newblock In Charles~J. Colbourn and Jeffrey~H. Dinitz, editors, {\em Handbook of Combinatorial Designs}, pages 333--336, Boca Raton, FL, 2006. CRC Press.
+
 \end{thebibliography}
