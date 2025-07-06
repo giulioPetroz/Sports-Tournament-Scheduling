@@ -165,7 +165,7 @@ python source/SMT/model.py --teams {TEAMS} --solver {SOLVER}
 ```
 ```bash 
 # E.G.
-python source/MIP/model.py --teams 6 --solver z3
+python source/SMT/model.py --teams 6 --solver z3
 ```
 
 ## Parameters
