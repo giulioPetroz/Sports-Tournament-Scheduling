@@ -3,8 +3,6 @@
 This model utilizes two primary decision variables to construct the tournament schedule and assign home/away teams for each match.
 
 \subsubsection{\text{matches}}
-% For $p \in P, w \in W$, $matches_{p, w} = m \in M$ determines that $rb_{m, w}$ is scheduled in week $w$ and period $p$.
-
 For each period $p \in P$ and week $w \in W$
 $$
 matches_{p,w}=m \in M
@@ -12,12 +10,21 @@ $$
 determines that $rb_{m, w}$ is scheduled in week $w$ and period $p$.
 
 
-\subsubsection{\text{home\_away}}
-For each $p \in P$ and week $w \in W$, $home\_away_{p, w} \in \{0, 1\}$, assigns the home team for the match scheduled at period $p$ in week $w$. Specifically, $\text{home\_away}_{p, w} = 0$ means the first team listed in the match plays at home, while $\text{home\_away}_{p, w} = 1$ means the second team plays at home.
+\subsubsection{\text{home\_away}}  
+For each period $p \in P$ and week $w \in W$  
+$$  
+home\_away_{p,w} = a \in \{0, 1\}  
+$$  
+determines which team is assigned as the home team for the match scheduled in week $w$ and period $p$. Specifically, $a = 0$ means the first team listed plays at home, while $a = 1$ means the second team plays at home.
+
 
 \subsection{Auxiliary Variables}
-\subsubsection{\text{home\_games}}
-The auxiliary variable $\text{home\_games}_{t} \in [1, \dots, N-1]$ for $t \in T$, represents the total number of home games assigned to team $t$ throughout the tournament. Its value is derived from the assignments of the decision variables $\text{matches}$ and $\text{home\_away}$.
+\subsubsection{\text{home\_games}}  
+For each team $t \in T$  
+$$  
+home\_games_{t} = h \in [1, \dots, N-1]  
+$$  
+determines the total number of home games assigned to team $t$ throughout the tournament. Its value is derived from the assignments of the decision variables $matches$ and $home\_away$.
 
 
 \subsection{Objective Function}
@@ -31,6 +38,11 @@ The value of $\text{max\_imbalance}$ is determined by the following fairness con
 \[ \forall t \in T : \left| 2 \times \text{home\_games}_{t} - (N-1) \right| \leq \text{max\_imbalance} \]
 This formulation precisely defines the absolute "imbalance" for each team $t$. This imbalance is derived from the difference between a team's home games and away games. Since $\text{home\_games}_{t} + \text{away\_games}_{t} = N-1$ (total games), substituting the expression for $\text{away\_games}_{t}$ yields the imbalance for team $t$ as $2 \times \text{home\_games}_{t} - (N-1)$. By enforcing that the absolute value of this imbalance for every team must be less than or equal to $\text{max\_imbalance}$, this variable effectively captures the largest such deviation among all teams, serving as the direct measure of the overall schedule's fairness.
 
+To further support a fair and computationally efficient solution, the model includes a weekly balancing condition, which helps reduce the search space by ensuring that within each week $w$, the number of matches where the second team plays at home ($\text{home\_away}_{p, w} = 1$) is roughly half of the total matches $|P|$, with a maximum deviation of 1:
+\[
+\forall w \in W : \left| \sum_{p \in P} \text{home\_away}_{p, w} - \left\lfloor \frac{|P|}{2} \right\rfloor \right| \leq 1.
+\]
+This guides the solver toward balanced assignments week by week and helps prune highly imbalanced configurations.
 
 \subsubsection{Objective}
 The objective is to \textbf{minimize $\text{max\_imbalance}$}:
@@ -46,8 +58,8 @@ These constraints are strictly necessary for defining a feasible round-robin sch
     \[ \forall w \in W : \texttt{all\_different}([\texttt{matches}[p, w] \mid p \in P]) \]
 
     \item \textbf{Each team plays at most twice per period:} 
-    % TODO explain the implementation please!
 \[ \forall p \in P, \forall t \in T : \left| \{ (w, s) \mid w \in W, s \in S, \text{rb}_{\text{matches}_{p, w}, w, s} = t \} \right| \leq 2 \]
+Implemented using the \texttt{global\_cardinality} global constraint.
 
 \end{enumerate}
 
@@ -58,13 +70,16 @@ These constraints are strictly necessary for defining a feasible round-robin sch
 The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if team $t$ is located in slot $s$ and that slot $s$ is designated as the home slot by $\text{home\_away}_{p,w}$.
 \end{enumerate}
 
+
 \subsubsection{Implied Constraints}
-% TODO: explain relationship with all_different
 \begin{enumerate}
-    % TODO explain the implementation please!
-    \item \textbf{Each team appears exactly once per week:}
-    \[ \forall w \in W, \forall t \in T : \left| \{ (p, s) \mid p \in P, s \in S, \text{rb}_{\text{matches}_{p, w}, w, s} = t \} \right| = 1 \]
+   \item \textbf{Each team appears exactly once per week:}  While this is implicitly ensured by the combination of the \texttt{all\_different} constraint on \texttt{matches} and the construction of \texttt{rb}, explicitly stating it helps the solver propagate information earlier and prune the search space more effectively.  It is implemented using the \texttt{global\_cardinality} global constraint:
+    \[
+     \forall w \in W, \forall t \in T : \left| \{ (p, s) \mid p \in P, s \in S, \text{rb}_{\text{matches}_{p, w}, w, s} = t \} \right| = 1.
+ \]
 \end{enumerate}
+
+
 
 \subsubsection{Symmetry Breaking Constraints}
 
@@ -76,10 +91,6 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
     \item \textbf{Fix first match home assignment to break home/away symmetry:} This constraint eliminates global home/away assignment symmetry by fixing the home/away status of the first match.
     \[ \text{home\_away}_{0, 0} = 0 \]
 
-% TODO: move to Optimization
-\item \textbf{Balance the home/away assignments within each week:} While not a strict symmetry breaking constraint, this constraint helps reduce the search space by ensuring that within each week $w$, the number of matches where the second team plays at home ($\text{home\_away}_{p, w}=1$) is roughly half of the total matches ($|P|$), with a maximum deviation of 1:
-\[ \forall w \in W : \left| \sum_{p \in P} \text{home\_away}_{p, w} - \left\lfloor \frac{|P|}{2} \right\rfloor \right| \leq 1 \]
-This guides the solver towards balanced assignments and prunes highly imbalanced weekly configurations.
 
 \end{enumerate}
 
@@ -99,9 +110,6 @@ A uniform time limit of $300$ seconds was imposed for each individual problem in
 Four configurations were tested: \texttt{baseline (core)}, \texttt{baseline+implied}, \texttt{baseline+symmetry breaking}, \texttt{full model}.
 
 \textbf{Search Strategies:}
-Three distinct search strategies were employed to analyze solver behavior, with a particular focus on how they influenced Gecode, often considered to have weaker default heuristics compared to modern SAT-based solvers.
-
-\textbf{Search Strategies:}
 Three distinct search strategies were employed to analyze solver behavior, focusing on their influence on Gecode, given its often weaker default heuristics compared to modern SAT-based solvers.
 
 \begin{enumerate}
@@ -117,6 +125,13 @@ To ensure a fair and controlled comparison under single-threaded conditions (ali
 
 
 \subsubsection{Experimental Results}
+In the following tables, we report CPU times for different solvers and four model configurations:
+\begin{itemize}
+    \item \texttt{bs} denotes the baseline (core) model
+     \item  \texttt{noIMPL} denotes the baseline with symmetry breaking constraints
+    \item \texttt{noSB} denotes the baseline with implied constraints
+    \item \texttt{complete} denotes the full model with both implied and symmetry breaking constraints
+\end{itemize}
 
 \begin{table}[htbp]
 \centering
@@ -129,14 +144,14 @@ To ensure a fair and controlled comparison under single-threaded conditions (ali
   & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB \\
 \midrule
 6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-8 & 6 & 0 & 0 & 7 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-10 & N/A & N/A & 0 & N/A & 0 & 0 & 0 & 0 & 1 & 1 & 0 & 1 \\
-12 & N/A & N/A & 0 & N/A & 5 & 1 & 3 & 2 & 3 & 2 & 2 & 2 \\
-14 & N/A & N/A & N/A & N/A & 180 & 21 & 69 & 141 & 5 & 6 & 5 & 5 \\
-16 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 16 & 29 & 29 & 13 \\
-18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 265 & 35 & 39 & 270 \\
-20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 84 & 67 & 66 & 82 \\
-22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 238 & 157 & 118 & 253 \\
+8 & 6 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+10 & N/A & N/A & N/A & N/A & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+12 & N/A & N/A & N/A & N/A & 5 & 1 & 2 & 4 & 3 & 2 & 2 & 3 \\
+14 & N/A & N/A & N/A & N/A & 188 & 20 & 184 & 292 & 4 & 6 & 6 & 6 \\
+16 & N/A & N/A & N/A & N/A & N/A & N/A & 276 & N/A & 15 & 28 & 35 & 15 \\
+18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 261 & 34 & 43 & 237 \\
+20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 83 & 66 & 79 & 95 \\
+22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 234 & 185 & 135 & N/A \\
 \bottomrule
 \end{tabular}%
 }
@@ -156,9 +171,9 @@ To ensure a fair and controlled comparison under single-threaded conditions (ali
 6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 8 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 10 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
-12 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 54 & 55 & 58 & 47 \\
-14 & 4 & 8 & 4 & 7 & N/A & 57 & 34 & N/A & N/A & N/A & N/A & N/A \\
-16 & N/A & N/A & 191 & 125 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+12 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 54 & 55 & 58 & 81 \\
+14 & 4 & 7 & 4 & 4 & N/A & 54 & 33 & N/A & N/A & N/A & N/A & N/A \\
+16 & N/A & N/A & 189 & 47 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 \bottomrule
 \end{tabular}%
 }
@@ -178,10 +193,10 @@ To ensure a fair and controlled comparison under single-threaded conditions (ali
 6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 8 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
 10 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
-12 & 0 & 0 & 0 & 0 & 8 & 96 & 3 & 2 & 54 & 63 & 59 & 50 \\
-14 & 1 & 5 & 1 & 0 & N/A & N/A & 184 & 250 & N/A & N/A & N/A & N/A \\
-16 & 183 & 19 & 1 & 8 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
-18 & N/A & 3 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+12 & 0 & 0 & 0 & 0 & 8 & 1 & 3 & 2 & 54 & 62 & 59 & 81 \\
+14 & 1 & 5 & 1 & 0 & N/A & 84 & 183 & 145 & N/A & N/A & N/A & N/A \\
+16 & 181 & 19 & 1 & 6 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+18 & N/A & 3 & N/A & 245 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 \bottomrule
 \end{tabular}%
 }
