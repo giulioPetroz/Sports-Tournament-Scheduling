@@ -35,7 +35,7 @@ array [P, W, S] of T: rb = array3d(P, W, S,
 % Decision Variables
 array [P, W] of var P: matches;
 array [P, W] of var 0..1: home_away;
-var 1..N div 2 : max_imbalance;
+var 1..N - 1: max_imbalance;
 array [T] of var 1..N-1: home_games;
 
 % Essential Constraints Only

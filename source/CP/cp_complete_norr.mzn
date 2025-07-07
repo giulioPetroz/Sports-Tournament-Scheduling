@@ -49,7 +49,7 @@ array [P, W] of var P: matches;
 array [P, W] of var 0..1: home_away;
 
 % Objective: minimize maximum imbalance in home games
-var 1..N div 2 : max_imbalance;
+var 1..N -1 : max_imbalance;
 
 % Number of home games for each team
 array [T] of var 1..N-1: home_games;
