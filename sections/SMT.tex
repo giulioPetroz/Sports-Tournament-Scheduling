@@ -1,83 +1,136 @@
 \section{SMT Model}
-This section describes our SMT approach for the Sports Tournament Scheduling (STS) problem.  
-The problem is modeled using the Quantifier-Free Linear Integer Arithmetic (QF\_LIA) theory and solved with the SMT solvers Z3 and CVC5.  
-Our encoding is divided into two phases.
-
-In \textbf{Phase~1}, we generate a feasible round-robin schedule by selecting a valid assignment of precomputed matches to each slot. The matches for each week are determined in advance using the matrix $rb$. Each slot $(p,w)$ then chooses one of these predefined pairs.
-
-In \textbf{Phase~2}, we optimize the feasible solution by balancing the number of home and away games for each team.  
-Each phase is encoded in a separate \texttt{.smt2} instance.
 
 \subsection{Decision Variables}
 
-\textbf{Phase~1:}
+The SMT model is divided into two phases:
+
 \begin{itemize}
-    \item $\mathit{home}_{p,w} \in \{1,\dots,n\}$: home team assigned to period $p$ in week $w$.
-    \item $\mathit{away}_{p,w} \in \{1,\dots,n\}$: away team assigned to period $p$ in week $w$.
-    \item $\mathit{index}_{p,w,t} \in \{\text{true}, \text{false}\}$: true if pair $t$ is selected for slot $(p,w)$.
+    \item \textbf{Phase~1}: selects exactly one match pair $m$ for each period $p$ and week $w$.
+    \item \textbf{Phase~2}: reuses the feasible schedule and flips home/away slots to optimize balance.
 \end{itemize}
 
-\textbf{Phase~2:}
+\textbf{Phase~1 variables}:
 \begin{itemize}
-    \item $\mathit{flip}_{p,w} \in \{\text{true}, \text{false}\}$: true if the home and away teams in slot $(p,w)$ are swapped to improve balance.
-    \item $\mathit{homeEff}_{p,w}$, $\mathit{awayEff}_{p,w}$: effective home and away teams after possible flipping.
+    \item $\mathit{index}_{p,w,m} \in \{\text{true}, \text{false}\}$: true if match pair $m$ is selected for $(p,w)$.
+    \item $\mathit{home}_{p,w} \in T$: home team in $(p,w)$.
+    \item $\mathit{away}_{p,w} \in T$: away team in $(p,w)$.
+\end{itemize}
+
+\textbf{Phase~2 variables}:
+\begin{itemize}
+    \item $\mathit{flip}_{p,w} \in \{\text{true}, \text{false}\}$: indicates if match in $(p,w)$ is flipped.
+    \item $\mathit{homeEff}_{p,w}$, $\mathit{awayEff}_{p,w}$: effective teams after flipping.
 \end{itemize}
 
 \subsection{Objective Function}
 
-The objective function applies only to \textbf{Phase~2} and aims to minimize the maximum imbalance $k$ between home and away games for any team:
+Minimize the maximum imbalance $k$:
 \[
-k^* = \min \Big\{\, k ~\Big|~ \forall\, t,\; |H_t - A_t| \leq k\, \Big\},
-\quad H_t = \sum_{p,w} [\,\mathit{homeEff}_{p,w} = t\,], \quad
-A_t = \sum_{p,w} [\,\mathit{awayEff}_{p,w} = t\,].
+k^* = \min \Big\{ k ~|~ \forall t \in T: |H_t - A_t| \leq k \Big\},
+\quad 
+H_t = \sum_{p,w} [\, \mathit{homeEff}_{p,w} = t\,], \quad 
+A_t = \sum_{p,w} [\, \mathit{awayEff}_{p,w} = t\,].
 \]
 
-The effective assignments are defined by:
+Effective teams:
 \[
-\mathit{homeEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w},\, \mathit{away}_{p,w},\, \mathit{home}_{p,w}), \quad
-\mathit{awayEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w},\, \mathit{home}_{p,w},\, \mathit{away}_{p,w}).
+\mathit{homeEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w}, \mathit{away}_{p,w}, \mathit{home}_{p,w}), 
+\quad
+\mathit{awayEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w}, \mathit{home}_{p,w}, \mathit{away}_{p,w}).
 \]
-
-The optimal $k^*$ is found via binary search over the feasible imbalance bounds.
 
 \subsection{Constraints}
 
-\textbf{Phase~1:}
-\begin{itemize}
-    \item \textbf{Unique pair selection:} each slot $(p,w)$ must select exactly one pair $t$:
-    \[
-    \sum_{t} \mathit{index}_{p,w,t} = 1.
-    \]
-    \item \textbf{Unique usage per pair:} each pair $t$ for week $w$ must be assigned to exactly one period:
-    \[
-    \sum_{p} \mathit{index}_{p,w,t} = 1.
-    \]
-    \item \textbf{Binding:} if $\mathit{index}_{p,w,t}$ is true, then $\mathit{home}_{p,w}$ and $\mathit{away}_{p,w}$ must match the pair $(h_{t,w},\, a_{t,w})$:
-    \[
-    \bigvee_{t} \Big(
-      \mathit{index}_{p,w,t} \wedge 
-      \mathit{home}_{p,w} = h_{t,w} \wedge 
-      \mathit{away}_{p,w} = a_{t,w}
-    \Big).
-    \]
-    \item \textbf{Period limit:} each team appears at most twice in the same period across all weeks.
-    \item \textbf{Symmetry breaking:} fix the first pair in the first slot: $\mathit{index}_{0,0,0} = \text{true}$.
-\end{itemize}
+\subsubsection{Unique match assignment per slot}
 
-\textbf{Phase~2:}
-\begin{itemize}
-    \item \textbf{Balance:} for every team $t$, the difference between the number of home and away games must respect the bound:
-    \[
-    |H_t - A_t| \leq k.
-    \]
-\end{itemize}
-\textit{Note:} all feasibility constraints from Phase~1 remain valid in Phase~2, since only the home/away roles may be flipped to improve balance.
+Each period $(p,w)$ must select exactly one match pair:
+\[
+\forall p \in P,\, w \in W:\; 
+\sum_{m \in M} \mathit{index}_{p,w,m} = 1.
+\]
+
+\subsubsection{Each match pair used exactly once per week}
+
+Each pair $m$ must be assigned exactly once within each week:
+\[
+\forall m \in M,\, w \in W:\; 
+\sum_{p \in P} \mathit{index}_{p,w,m} = 1.
+\]
+
+\subsubsection{Binding decision}
+
+If $\mathit{index}_{p,w,m}$ is true, the slot must bind to $rb$:
+\[
+\forall p \in P,\, w \in W:\; 
+\bigvee_{m \in M} \Big(
+  \mathit{index}_{p,w,m} \wedge 
+  \mathit{home}_{p,w} = rb_{m,w,0} \wedge 
+  \mathit{away}_{p,w} = rb_{m,w,1}
+\Big).
+\]
+
+\subsubsection{Team appears at most twice in same period}
+
+A team cannot appear more than twice in the same period over the whole tournament:
+\[
+\forall t \in T,\, p \in P: 
+\sum_{w \in W} 
+\sum_{m \in M} \Big(
+  [\, rb_{m,w,0} = t \vee rb_{m,w,1} = t\, ] \cdot [\, \mathit{index}_{p,w,m} \, ]
+\Big) 
+\leq 2.
+\]
+
+\subsubsection{Symmetry breaking}
+
+Fix first match pair in first slot:
+\[
+\mathit{index}_{0,0,0} = \text{true}.
+\]
+
+\subsubsection{Imbalance constraint}
+
+For Phase~2:
+\[
+|H_t - A_t| \leq k.
+\]
 
 \subsection{Validation}
 
+\subsubsection{Experimental design}
+
+Implemented in Python + SMT-LIB. Solvers: Z3 and CVC5, timeout 300s. Phase~1 finds feasible solution; Phase~2 binary-searches the minimal $k$.
+
+\subsubsection{Results}
+
+Z3 solves larger instances faster. CVC5 is feasible for small $N$ only.
+
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=0.8\textwidth]{img/SMT-result.png}
-  \caption{SMT Optimization}
-  \label{fig:output}
+  \includegraphics[width=0.8\linewidth]{output.png}
+  \caption{SMT solution example}
+  \label{fig:smt-result}
 \end{figure}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{|c|c|c|}
+\toprule
+\textbf{n} & \textbf{Z3 (s)} & \textbf{CVC5 (s)} \\
+\midrule
+6  & 0.11 & 0.13 \\
+8  & 0.17 & 1.85 \\
+10 & 0.23 & N/A \\
+12 & 0.29 & N/A \\
+14 & 0.36 & N/A \\
+16 & 0.74 & N/A \\
+18 & 3.52 & N/A \\
+20 & 14.32 & N/A \\
+22 & 280.17 & N/A \\
+24 & N/A & N/A \\
+\bottomrule
+\end{tabular}
+\caption{SMT solving times}
+\label{table:smt-result}
+\end{table}
