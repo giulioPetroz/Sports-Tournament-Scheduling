@@ -1,7 +1,7 @@
 \section{MIP}
 \subsection{Decision variables}
 \subsubsection{Match schedule}
-The binary decision variables $match\_schedule{w,p,m}$ are equal to 1 if and only if in week $w \in W$ and period $p \in P$ match $m \in M$ is played.
+The binary decision variables $match\_schedule_{w,p,m}$ are equal to 1 if and only if in week $w \in W$ and period $p \in P$ match $m \in M$ is played.
 
 \subsubsection{Flip slot}
 The binary decision variables $flip\_slot_{w,p}$ determine which team plays at home and which away. $flip\_slot$ is indexed by weeks and periods, so $flip\_slot_{w,p}$ corresponds to the matchup $(t_1, t_2), \ t_1, t_2 \in T$ in week w and period p; if $flip\_slot_{w,p} = 0$, then $t_1$ plays at home and $t_2$ away, if, instead, $flip\_slot_{w,p} = 1$, the order of the slots is reversed.
