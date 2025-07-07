@@ -25,19 +25,21 @@
 
 
 \section{Introduction}
-% Add book reference
-% Add complexity reduction analysis
-% \cite{10.1007/10704567_6}
+% TODO: add complexity reduction explanation/reference
 In this project, we address the sports scheduling (STS) problem by applying a unified modeling approach inspired by \cite{10.1007/10704567_6} across four computational paradigms: Constraint Programming (CP), Boolean Satisfiability (SAT), Satisfiability Modulo Theory (SMT) and Mixed Integer Programming (MIP).
-We begin by considering the structure of a round robin tournament: for $N$ teams, the tournament spans $N-1$ weeks, with each week consisting of $\frac{N}{2}$ games (or periods), ensuring that every team plays exactly once per week. This structure naturally corresponds to a 1-factorization of the complete graph $K_N$ on $N$ vertices \cite{Dinitz2006RoundRobin}.
+We begin by considering the structure of a round robin tournament: for $N$ teams, the tournament spans $N-1$ weeks, with each week consisting of $\frac{N}{2}$ games (or periods). This structure naturally corresponds to a 1-factorization of the complete graph $K_N$ on $N$ vertices \cite{Dinitz2006RoundRobin}.
 
-A balanced tournament design is a permutation of the order of games within each week so as to satisfy the additional constraints \cite{Lamken2006BalancedTournamentDesigns}. 
-Therefore it is natural to model the problem by considering an $\frac{N}{2}\times(N-1)$ matrix of matches $(t_i, t_j)$ representing the round robin tournament for $N$ teams, where each column represents a week and contains the set of matches scheduled for that round.
-The objective is to find an indexing of the games along the periods of each week to satisfy the STS problem.
-Our experimental results show that the time required to precompute the underlying round-robin schedule is negligible (less than a second) with respect to the one needed for all the solved instances.
-Moreover, by precomputing the round robin tournament matrix, we eliminate symmetries across weeks and fix slot assignments, which significantly reduces the search space for both satisfiability and optimization.
-% All implementations take as input the number of teams in the tournament and start by precomputing the weekly matchups for the round-robin tournament. 
-% The precomputation cost is minimal, for all tested team sizes the precomputation required less than a second. The matchup matrix not only speeds up the search by reducing the problem to ordering matchups, but also guarantees that the constraints of each team playing each other and playing once a week are satisfied. With all four techniques, we aim to find a solution satisfying the constraints and minimizing the objective variable D, the maximum difference between games played at home and away for a team; $D\in [1, n-1]$, where n is the number of teams.
+A balanced tournament design is a permutation of the order of games within each week satisfying the balancing constraints described in \cite{Lamken2006BalancedTournamentDesigns}. 
+Therefore it is natural to model the problem by considering an $\frac{N}{2}\times(N-1)$ matrix of matches representing the round robin tournament for $N$ teams, where each column represents a week and contains the set of matches scheduled for that week.
+Our experimental results show that the time required to precompute the underlying round-robin schedule is negligible (less than a second).
+Moreover, by precomputing the round robin tournament matrix: 
+\begin{itemize}
+  \item symmetries across weeks and matchup pairings are removed, reducing the search space
+  \item each team plays once a week
+  \item each team plays against the other once
+\end{itemize}
+%we eliminate symmetries across weeks and fix matchup pairings, which significantly reduces the search space for both satisfiability and optimization. Also, thanks to this precomputation techinique, it is guaranteed that the constraints of each team playing once a week and against every other once are satisfied.
+
 
 \subsection{Notation}
 \begin{itemize}

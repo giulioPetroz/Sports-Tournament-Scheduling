@@ -1,10 +1,10 @@
 \section{MIP}
 \subsection{Decision variables}
-\subsubsection{matches}
-The binary decision variables $matches_{w,p,m}$ are equal to 1 if and only if in week $w \in W$ and period $p \in P$ match $m \in M$ is played.
+\subsubsection{Match schedule}
+The binary decision variables $match\_schedule{w,p,m}$ are equal to 1 if and only if in week $w \in W$ and period $p \in P$ match $m \in M$ is played.
 
-\subsubsection{slots}
-The binary decision variables $home\_away_{w,p}$ determine which team plays at home and which away. $home\_away$ is indexed by weeks and periods, so $home\_away_{w,p}$ corresponds to the matchup $(t_1, t_2), \ t_1, t_2 \in T$ in week w and period p; if $home\_away_{w,p} = 0$, then $t_1$ plays at home and $t_2$ away, if, instead, $home\_away_{w,p} = 1$, the order of the slots is reversed.
+\subsubsection{Flip slot}
+The binary decision variables $flip\_slot_{w,p}$ determine which team plays at home and which away. $flip\_slot$ is indexed by weeks and periods, so $flip\_slot_{w,p}$ corresponds to the matchup $(t_1, t_2), \ t_1, t_2 \in T$ in week w and period p; if $flip\_slot_{w,p} = 0$, then $t_1$ plays at home and $t_2$ away, if, instead, $flip\_slot_{w,p} = 1$, the order of the slots is reversed.
 
 \subsubsection{team periods of play}
 The binary variables $TP_{t,w,p}$ are used to constrain each team to playing at most twice in the same period. $TP_{t,w,p} = 1$ if and only if team t plays in week w and period p. 
@@ -23,26 +23,26 @@ To compute D as the maximum difference between games played at home and away bet
 
 \begin{align}
     \min \ &D \\
-    H_t =& \sum_{w \in W, m \in M} \mathbbm{1}[home\_away_{w,p} = 0 \land rb_{m,w,0} = t] \notag \\
-    +& \sum_{w \in W, m \in M} \mathbbm{1}[home\_away_{w,p} = 1 \land rb_{m, w,1} = t] \hspace{20px}  && \forall t \in T\\
+    H_t =& \sum_{w \in W, m \in M} \mathbbm{1}[flip\_slot_{w,p} = 0 \land rb_{m,w,0} = t] \notag \\
+    +& \sum_{w \in W, m \in M} \mathbbm{1}[flip\_slot_{w,p} = 1 \land rb_{m, w,1} = t] \hspace{20px}  && \forall t \in T\\
     D &\geq 2H_t - (n-1) && \forall t \in T\\
     D & \geq -(2 H_t - (n-1)) && \forall t \in T
 \end{align}
 
 \subsection{Constraints}
-\subsubsection{periods and matches}
+\subsubsection{Each match is assigned to a unique period each week}
 Due to how the decision variables are defined, it was necessary to impose that each period in each week is assigned a single match (5) and each match is assigned to a single period (6).
 
 \begin{align}
-    \sum_{m \in M} matches_{w,p,m} &= 1 \hspace{20px} \forall p \in P \hspace{10px} \forall w \in W\\
-    \sum_{p \in P} matches_{w,p,m} &= 1 \hspace{20px} \forall m \in M \hspace{10px}\forall w \in W
+    \sum_{m \in M} match\_schedule_{w,p,m} &= 1 \hspace{20px} \forall p \in P \hspace{10px} \forall w \in W\\
+    \sum_{p \in P} match\_schedule_{w,p,m} &= 1 \hspace{20px} \forall m \in M \hspace{10px}\forall w \in W
 \end{align}
 
-\subsubsection{team playing at most twice in the same period}
-The constraint on teams playing at most twice in the same period is imposed by first linking the variables of $matches$ to those in TP based on the values in $rb$ (7) and then limiting the sum of periods of play to being smaller than 2 (8). 
+\subsubsection{Each team plays at most twice in the same period}
+The constraint on teams playing at most twice in the same period is imposed by first linking the variables of $match\_schedule$ to those in TP based on the values in $rb$ (7) and then limiting the sum of periods of play to being smaller than 2 (8). 
 
 \begin{align}
-    TP_{t,w,p} &= matches_{w,p,m} \ \text{where} \ rb_{m, w} =(t, t') \lor (t', t) \hspace{20px} \forall t \forall p  \forall w\\
+    TP_{t,w,p} &= match\_schedule_{w,p,m} \ \text{where} \ rb_{m, w} =(t, t') \lor (t', t) \hspace{20px} \forall t \forall p  \forall w\\
     \sum_{w \in W} &TP_{t,w,p} \leq 2 \hspace{40px} \forall t \in T \hspace{10px} \forall p \in P
 \end{align}
 

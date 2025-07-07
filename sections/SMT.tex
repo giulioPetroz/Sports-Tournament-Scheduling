@@ -18,7 +18,7 @@ The SMT model is divided into two phases:
 
 \textbf{Phase~2 variables}:
 \begin{itemize}
-    \item $\mathit{flip}_{p,w} \in \{\text{true}, \text{false}\}$: indicates if match in $(p,w)$ is flipped.
+    \item $\mathit{flip\_slot}_{p,w} \in \{\text{true}, \text{false}\}$: indicates if match in $(p,w)$ is flipped.
     \item $\mathit{homeEff}_{p,w}$, $\mathit{awayEff}_{p,w}$: effective teams after flipping.
 \end{itemize}
 
@@ -34,9 +34,9 @@ A_t = \sum_{p,w} [\, \mathit{awayEff}_{p,w} = t\,].
 
 Effective teams:
 \[
-\mathit{homeEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w}, \mathit{away}_{p,w}, \mathit{home}_{p,w}), 
+\mathit{homeEff}_{p,w} = \text{ite}(\mathit{flip\_slot}_{p,w}, \mathit{away}_{p,w}, \mathit{home}_{p,w}), 
 \quad
-\mathit{awayEff}_{p,w} = \text{ite}(\mathit{flip}_{p,w}, \mathit{home}_{p,w}, \mathit{away}_{p,w}).
+\mathit{awayEff}_{p,w} = \text{ite}(\mathit{flip\_slot}_{p,w}, \mathit{home}_{p,w}, \mathit{away}_{p,w}).
 \]
 
 \subsection{Constraints}
