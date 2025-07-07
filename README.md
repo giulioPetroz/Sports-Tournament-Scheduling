@@ -126,7 +126,7 @@ _(Example: `-D "N=8"`)_
 To reproduce all experiments presented in the report:
 
 ```bash
-python3 run_mip_experiment.py
+python3 run_mip_experiments.py
 ```
 ### Indivdual Model Execution: 
 To run a specific model configuration: 
