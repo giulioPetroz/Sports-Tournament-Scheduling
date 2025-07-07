@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import sys
 import re
@@ -10,10 +9,10 @@ import subprocess
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, ROOT)
 
-import solution_checker
+from solution_checker import check_solution
 
 # ==== GLOBAL CONFIG ====
-GLOBAL_TIMEOUT = 300.0  # overall timeout in seconds
+GLOBAL_TIMEOUT = 300.0 
 
 SOLVERS = {
     "z3": {
@@ -29,8 +28,8 @@ SOLVERS = {
 
 }
 
-def run_solver(name, smtfile, timeout_s):
-    """Run solver `name` on `smtfile` with `timeout_s` seconds left."""
+def run_solver(name, smtfile, timeout_s = GLOBAL_TIMEOUT):
+
     s = SOLVERS[name]
     cmd = [s["cmd"]] + s["timeout"](timeout_s) + s["model"] + [smtfile]
     start = time.time()
@@ -38,7 +37,7 @@ def run_solver(name, smtfile, timeout_s):
     return proc.stdout, time.time() - start
 
 def imbalance_of(S, t):
-    """Compute |#home_t - #away_t| in solution S."""
+
     P, W = len(S), len(S[0])
     home = sum(1 for p in range(P) for w in range(W) if S[p][w][0] == t)
     away = sum(1 for p in range(P) for w in range(W) if S[p][w][1] == t)
@@ -47,10 +46,13 @@ def imbalance_of(S, t):
 # ==== PHASE 1 ====
 
 def phase1_generate_smt2(n, fname):
-    P, W = n // 2, n - 1
 
-    # Berger pairs
-    rb = []
+    THIS_DIR = os.path.dirname(__file__)
+    smt_folder = os.path.join(THIS_DIR, "smt")
+    os.makedirs(smt_folder, exist_ok=True)
+
+    P, W = n // 2, n - 1
+    rb = [] # rb[p][w] holds the (home, away) pair assigned to index t in slot (p,w)
     for p in range(P):
         week = []
         for w in range(W):
@@ -61,17 +63,16 @@ def phase1_generate_smt2(n, fname):
             week.append(tuple(sorted(pair)))
         rb.append(week)
 
-    # Path robusto: source/SMT/smt/
-    THIS_DIR = os.path.dirname(__file__)
-    smt_folder = os.path.join(THIS_DIR, "smt")
-    os.makedirs(smt_folder, exist_ok=True)
-
+    # Initialize SMT-LIB script: set logic and model production
     lines = [
-        "; phase1: complete schedule",
         "(set-logic QF_LIA)",
         "(set-option :produce-models true)"
     ]
 
+    # Declare decision variables:
+    # For each slot: P periods x W weeks
+    # - index_{p,w,t} : Boolean selector for pair t in slot (p,w)
+    # - home_{p,w}, away_{p,w} : Integers for the assigned teams
     for p in range(P):
         for w in range(W):
             for t in range(P):
@@ -79,16 +80,21 @@ def phase1_generate_smt2(n, fname):
             lines.append(f"(declare-fun home_{p}_{w} () Int)")
             lines.append(f"(declare-fun away_{p}_{w} () Int)")
 
+    # Each slot must select exactly one pair:
+    # Sum over all index_{p,w,t} must be 1
     for p in range(P):
         for w in range(W):
             terms = " ".join(f"(ite index_{p}_{w}_{t} 1 0)" for t in range(P))
             lines.append(f"(assert (= (+ {terms}) 1))")
 
+    # Each pair must be used exactly once per week:
+    # Sum over all slots using pair t must be 1
     for t in range(P):
         for w in range(W):
             terms = " ".join(f"(ite index_{p}_{w}_{t} 1 0)" for p in range(P))
             lines.append(f"(assert (= (+ {terms}) 1))")
 
+    # For each slot, if index_{p,w,t} is true, bind home/away to correct pair
     for p in range(P):
         for w in range(W):
             ors = []
@@ -97,6 +103,7 @@ def phase1_generate_smt2(n, fname):
                 ors.append(f"(and index_{p}_{w}_{t} (= home_{p}_{w} {h}) (= away_{p}_{w} {a}))")
             lines.append(f"(assert (or {' '.join(ors)}))")
 
+    # Limit: a team must not appear more than twice in the same period slot across all weeks
     for t in range(1, n + 1):
         for p in range(P):
             terms = []
@@ -108,7 +115,10 @@ def phase1_generate_smt2(n, fname):
             if terms:
                 lines.append(f"(assert (<= (+ {' '.join(terms)}) 2))")
 
+    # Symmetry breaking: fix the first pair in the first slot to reduce equivalent solutions
     lines.append("(assert index_0_0_0)")
+
+    # Request feasibility and model
     lines += ["(check-sat)", "(get-model)"]
 
     smtpath = os.path.join(smt_folder, fname)
@@ -116,10 +126,9 @@ def phase1_generate_smt2(n, fname):
         f.write("\n".join(lines))
 
 
+
 def phase1_run(n, solver, start_time):
-    """
-    Run phase1 with chosen solver; return (status, S0, t1).
-    """
+
     fname = f"sts_phase1_{n}.smt2"
     phase1_generate_smt2(n, fname)
 
@@ -133,7 +142,6 @@ def phase1_run(n, solver, start_time):
     if not lines or lines[0] != "sat":
         return (lines[0] if lines else "timeout"), None, t1
 
-    # collapse define-fun
     blocks, cur = [], ""
     for L in lines[1:]:
         L=L.strip()
@@ -165,49 +173,61 @@ def phase1_run(n, solver, start_time):
 # ==== PHASE 2 ====
 
 def phase2_generate_smt2(n, S0, k, fname):
+
     P, W = len(S0), len(S0[0])
 
-    # Path robusto: source/SMT/smt/
     THIS_DIR = os.path.dirname(__file__)
     smt_folder = os.path.join(THIS_DIR, "smt")
     os.makedirs(smt_folder, exist_ok=True)
 
+    # Initialize the SMT-LIB lines: set logic and request models
     lines = [
         "; phase2: flip-only optimization",
         "(set-logic QF_LIA)",
         "(set-option :produce-models true)"
     ]
 
+    # Declare Boolean flip variables for each slot (period p, week w)
     for p in range(P):
         for w in range(W):
             lines.append(f"(declare-fun flip_{p}_{w} () Bool)")
 
+    # Define the effective home and away team for each slot,
+    # using an 'ite' expression that swaps home and away if the flip is true
     for p in range(P):
         for w in range(W):
             h0, a0 = S0[p][w]
             lines.append(f"(define-fun home_eff_{p}_{w} () Int (ite flip_{p}_{w} {a0} {h0}))")
             lines.append(f"(define-fun away_eff_{p}_{w} () Int (ite flip_{p}_{w} {h0} {a0}))")
 
+    # For each team t, impose the imbalance constraints:
+    # The difference (home games - away games) must be <= k,
+    # and the opposite difference (away games - home games) must be <= k.
     for t in range(1, n + 1):
-        H = " ".join(f"(ite (= home_eff_{p}_{w} {t}) 1 0)" for p in range(P) for w in range(W))
-        A = " ".join(f"(ite (= away_eff_{p}_{w} {t}) 1 0)" for p in range(P) for w in range(W))
+        # Count of matches where team t plays at home or away (after flipping)
+        H = " ".join(f"(ite (= home_eff_{p}_{w} {t}) 1 0)"
+                     for p in range(P) for w in range(W))
+        A = " ".join(f"(ite (= away_eff_{p}_{w} {t}) 1 0)"
+                     for p in range(P) for w in range(W))
+        # Impose |H - A| <= k
         lines.append(f"(assert (<= (- (+ {H}) (+ {A})) {k}))")
         lines.append(f"(assert (<= (- (+ {A}) (+ {H})) {k}))")
 
+    # Request the solver to find a solution satisfying the constraints
     lines += ["(check-sat)", "(get-model)"]
 
+    # Write the SMT-LIB code to the specified output file
     smtpath = os.path.join(smt_folder, fname)
     with open(smtpath, "w") as f:
         f.write("\n".join(lines))
 
 
+
 def phase2_run(n, S0, solver, start_time):
-    """Binary search on k using only flips, with global timeout.
-    Se trova k=1 valido si ferma subito.
-    """
+
     k_hi = max(imbalance_of(S0, t) for t in range(1, n+1))
     best, best_k = S0, k_hi
-    low, high = 1, k_hi  # Non ha senso testare k=0
+    low, high = 1, k_hi 
 
     while low <= high and time.time() - start_time < GLOBAL_TIMEOUT:
         mid = (low + high) // 2
@@ -223,7 +243,6 @@ def phase2_run(n, S0, solver, start_time):
         lines = out.strip().splitlines()
 
         if lines and lines[0] == "sat":
-            # Decodifica i flip trovati
             flips = {}
             for L in lines[1:]:
                 m = re.match(r"\(define-fun\s+flip_(\d+)_(\d+).* (true|false)\)", L)
@@ -231,7 +250,6 @@ def phase2_run(n, S0, solver, start_time):
                     p, w, val = int(m.group(1)), int(m.group(2)), (m.group(3) == "true")
                     flips[(p, w)] = val
 
-            # Costruisci la nuova soluzione flipata
             P_, W_ = len(best), len(best[0])
             new = []
             for p in range(P_):
@@ -244,7 +262,6 @@ def phase2_run(n, S0, solver, start_time):
 
             best, best_k = new, mid
 
-            # Se abbiamo raggiunto imbalance minimo teorico = 1 fermiamo subito
             if best_k == 1:
                 break
 
@@ -257,62 +274,69 @@ def phase2_run(n, S0, solver, start_time):
 
 # ==== MAIN ====
 
-def solve_and_save(n, solver, start_time):
-    elapsed = time.time() - start_time
+def solve_and_save(n, solver):
+    start_time = time.time()
     header = f"\n=== n = {n}, solver = {solver.upper()} ==="
-
-    if elapsed >= GLOBAL_TIMEOUT:
-        print(header)
-        print(f"TIMEOUT in {elapsed:.2f}s (before Phase 1)")
-        return
-
     print(header)
-    # PHASE 1
+
+    # Phase 1
     status, S0, t1 = phase1_run(n, solver, start_time)
     if status != "sat":
         if status == "timeout":
             print(f"TIMEOUT")
+            save_json(n, solver, 300, None, 300, None, None, False)
         else:
             print(f"{status.upper()}")
         return
 
-    print(f"PHASE 1 COMPLETE: valid schedule in {t1:.2f}s")
+
+    # Validate Phase 1
+    result = check_solution(S0, None, t1, False)
+    if result != 'Valid solution':
+        print(f"Phase 1 checker FAILED: {result}")
+        return
+
     elapsed = time.time() - start_time
     if elapsed >= GLOBAL_TIMEOUT:
-        print(f"TIMEOUT before Phase 2")
-        # qui passa t1 sia come phase1 sia come solver (solo fase 1)
+        print(f"TIMEOUT")
         save_json(n, solver, t1, S0, t1, S0, None, False)
         return
 
-    # PHASE 2
+    print(f"PHASE 1 COMPLETE: valid schedule in {t1:.2f}s")
     print(f"Starting Phase 2 (optimization)...")
+
     Sopt, k_opt = phase2_run(n, S0, solver, start_time)
     total = time.time() - start_time
+
+    # Validate Phase 2
+    if Sopt:
+        result = check_solution(Sopt, k_opt, total, True)
+        if result != 'Valid solution':
+            print(f"Phase 2 checker FAILED: {result}")
+            return
 
     if total >= GLOBAL_TIMEOUT:
         print(f"TIMEOUT during Phase 2 after {total:.2f}s")
     else:
         print(f"PHASE 2 COMPLETE: best imbalance k* = {k_opt} in {total:.2f}s")
 
-    # se fase 2 è partita, `total` include anche l'ottimizzazione
     save_json(n, solver, t1, S0, total, Sopt, k_opt, total < GLOBAL_TIMEOUT)
 
 
 
+
 def save_json(n, solver, t1, S0, total, Sopt, k_opt, optimal):
+
     folder = os.path.join(ROOT, "res", "SMT")
     os.makedirs(folder, exist_ok=True)
-
     outpath = f"{folder}/{n}.json"
 
-    # Se esiste, carica il JSON attuale
     if os.path.exists(outpath):
         with open(outpath, "r") as f:
             result = json.load(f)
     else:
         result = {}
 
-    # Aggiorna o aggiungi la chiave di questo solver
     if Sopt is not None and k_opt is not None:
         final_sol = {
             "time": min(300, int(total)),
@@ -322,35 +346,35 @@ def save_json(n, solver, t1, S0, total, Sopt, k_opt, optimal):
         }
     else:
         final_sol = {
-            "time": min(300, int(total)),
+            "time": 300,
             "optimal": False,
             "obj": None,
-            "sol": S0
+            "sol": []
         }
+
 
     result[solver] = final_sol
 
-    # Salva di nuovo l’intero file
     with open(outpath, "w") as f:
         json.dump(result, f, indent=2)
 
     print(f"Result saved: {outpath}")
 
 
-
-
-
-
-if __name__=="__main__":
+if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--solver", choices=SOLVERS.keys(), default="z3",
                    help="Which SMT solver to use for both phases")
-    p.add_argument("-n", type=int, nargs="+", default=[4,6,8,10,12,14,16,18,20,22,24],
-                   help="List of n to solve")
+    p.add_argument("--teams", type=int, nargs="+", default=[4,6,8,10,12,14,16,18,20,22,24],
+                   help="List of teams to solve")
+    p.add_argument("--time-limit", type=float, default=300.0,
+                   help="Global timeout in seconds for solving (default: 300)")
+
     args = p.parse_args()
 
+    GLOBAL_TIMEOUT = args.time_limit
+
     start = time.time()
-    for n in args.n:
-        if time.time() - start >= GLOBAL_TIMEOUT:
-            break
-        solve_and_save(n, args.solver, start)
+    for n in args.teams:
+        solve_and_save(n, args.solver)
+
