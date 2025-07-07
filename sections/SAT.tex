@@ -1,27 +1,47 @@
 \section{SAT Model}
-% This part is mandatory for groups of 4 students. Groups up to 3 students can choose between SAT and SMT, and will be given bonus points if they do both.
-
 \subsection{Decision variables}
-% Describe all the literals of your model and their semantics. For example, $\Delta_{i,j} = \text{true}$ iff the driver goes from city $i$ to city $j$.
-Let $rb$ be the round robin tournament, $sts$ a schedule satisfying to the STS problem, and P, W, T the set of periods, weeks and teams respectively.
-The satisfiability task is formalized by the following categories of propositions:
+Let $sts$ be a schedule analogous to $rb$ satisfying to the STS problem:
+% The satisfiability task is formalized by the following categories of propositions:
+
+\subsubsection{Satisfiability}
+% \paragraph{\text{matches\_schedule}}
 \begin{itemize}
-    \item $matches\_schedule_{p, w, m} \leftrightarrow$ match $m$, denoting $rb_{m, w} = (t_1, t_2)$, takes place in period $p$ of week $w$
-    \item $matches\_to\_periods_{t_1, t_2, p} \leftrightarrow$ $t_1$ plays against $t_2$ in period $p$
+    \item \textbf{matches\_schedule}\\
+        For each period $p \in P$ and week $w \in W$:
+        $$
+        matches\_schedule_{p, w, m} = true \in \mathbb{B}
+        $$
+        if, and only if, the match $rb_{m, w}$ takes place in period $p$ of week $w$
+    \item \textbf{matches\_to\_periods}\\
+        For each period $p \in P$, $t_1 \in T$ and $t_2 \in T/\{t_1\}$:
+        $$
+        matches\_to\_periods_{t_1, t_2, p} = true \in \mathbb{B}
+        $$
+        if, and only if, $t_1$ plays against $t_2$ in period $p$
 \end{itemize}
-The optimization task, on the other hand, is expressed as follows.
+\subsubsection{Optimization}
 \begin{itemize}
-    \item $slots\_schedule_{p, w} \leftrightarrow$ team $sts_{p, w, 1} = t_1$ plays away
-    \item $matches\_to\_slots_{t_1, t_2} \leftrightarrow$ $t_1$ plays away and $t_2$ plays at home
+    \item \textbf{slots\_schedule}\\
+        For each period $p \in P$ and week $w \in W$:
+        $$
+        slots\_schedule_{p, w} = true \in \mathbb{B}
+        $$
+        if, and only if, team $sts_{p, w, 1} = t_1$ plays away
+    \item \textbf{matches\_to\_slots}\\
+        For each period $p \in P$, $t_1 \in T$ and $t_2 \in T/\{t_1\}$:
+        $$
+        matches\_to\_slots_{t_1, t_2} = true \in \mathbb{B}
+        $$
+        if, and only if, $t_1$ plays away and $t_2$ plays at home
 \end{itemize}
 
 \subsection{Objective function}
 Similarly to the other approaches, the objective is to minimize the absolute difference between the number of games played at home and away for each team.
-Let $T$ be the set of teams and $A_t$ the number of times the team $t \in T$ plays away, the objective function translates into the following:
+Let $A_t$ be the number of times the team $t \in T$ plays away, the objective function translates into the following:
 $$
-k * = \underset{k \in \mathbb{N}}{\text{argmax}} \left( \forall t \in T, A_t \geq k \right)
+k^* = \underset{k \in \mathbb{N}}{\text{argmax}} \left( \forall t \in T, A_t \geq k \right)
 $$
-The chosen CP model allows to solve the optimization task independetly of the STS constraints using the $sts$ schedule computed in the satisfiability process. The optimization consists of a binary search of $k*$ in the interval $[1, \lfloor\frac{N-1}{2}\rfloor]$. Since SAT doesn't directly support optimization, a new set of optimizing constraints is introduced for every instance of $k$ .
+The chosen model allows to solve the optimization task using the $sts$ schedule computed in the satisfiability process. The optimization consists of a binary search of $k^*$ in the interval $[1, \lfloor\frac{N-1}{2}\rfloor]$. Since SAT doesn't directly support optimization, a new set of optimizing constraints is introduced for every instance of $k$ .
 
 The result is encoded in $slots\_schedule_{p, w}$, which cannot express the constraints alone, due to structural limitations of the encoding.
 Instead \\$matches\_to\_slots_{t_1, t_2}$ is used: given a week $w$ and a period $p$, the team $sts_{p, w, 1} = t_1$ plays away if, and only if, the team $t_2 = sts_{p, w, 2}$ plays at home. Therefore, by definition:
@@ -34,8 +54,7 @@ $$
 $$
 
 \subsection{Constraints}
-% Describe all the clauses of your model and their semantics. In particular, describe the encoding(s) that you used. Follow the indications given in Section 2.3 for main problem constraints, implied constraints, and symmetry breaking constraints.
-\subsubsection{Every team plays once a week}
+\subsubsection{Each match is assigned to a unique period each week}
 In a Round-Robin tournament $rb$, each team plays exactly once a week. 
 Therefore the only problem is to ensure that for each week $w$, every match $rb_{m, w} = (t_i, t_j)$ is assigned to exactly one period $p$.
 
@@ -51,11 +70,11 @@ $$
 $$
 \subsubsection{Every team plays at most twice in the same period}
 The constraint cannot be expressed using directly $matches\_schedule_{p, w, m}$, due to structural limitations of the encoding. 
-Instead, we introduce the literal $matches\_to\_periods_{t_i, t_j, p}$: given a week $w$, the match $rb_{m,w}$ is scheduled in period $p$ if, and only if, the match $(rb_{m, w, 1}, rb_{m, w, 2}) = (t_1, t_2)$ takes place in period $p$. Therefore, by definition: 
+Instead, we introduce the literal $matches\_to\_periods_{t_1, t_2, p}$: given a week $w$, the match $rb_{m,w}$ is scheduled in period $p$ if, and only if, the match $(rb_{m, w, 1}, rb_{m, w, 2}) = (t_1, t_2)$ takes place in period $p$. Therefore, by definition: 
 $$
-    \forall p \in P, w \in W, m \in P.matches\_schedule_{p, w, m} \leftrightarrow matches\_to\_periods_{rb_{m, w, 1}, rb_{m, w, 2}, p}
+    \forall p \in P, w \in W, m \in P.(matches\_schedule_{p, w, m} \leftrightarrow matches\_to\_periods_{rb_{m, w, 1}, rb_{m, w, 2}, p})
 $$
-Computationally this constraint soundly maps $matches\_schedule$ to \\$matches\_to\_periods$, which allow to express the main constraint:
+Computationally this constraint soundly binds $matches\_schedule$ to \\$matches\_to\_periods$, which allow to express the main constraint:
 $$
     \forall p \in P, t_1 \in T. AtMost2(matches\_to\_periods_{t_1, t_2, p} | t_2 \in T/\{t_1\})
 $$
@@ -65,7 +84,32 @@ $$
 The model was written in Python by making use of the Z3 and the CVC5 library, which offers CaDiCaL and MiniSat as the underlying SAT solvers. The time elapsed to find an optimal solution, within the 300 second time limit, was measured and results presented in Fig.\ref{fig:SAT-result} . 
 \subsubsection{Experimental results}
 All solvers are able to find the optimal solution, which was much easier to find once the satisfying one was computed, but overall Z3 had the best performance in time and maximal size of the problem, i.e. $N=20$. On the other hand CaDiCaL was the worst, failing at $N=12$, while MiniSat stopped at $N=14$
-\begin{figure}
+
+\begin{table}[H]
+\centering
+\small
+{%
+\begin{tabular}{|c|c|c|c|}
+\toprule
+\textbf{n} & \textbf{Z3} &\textbf{CaDiCaL} & \textbf{MiniSat} \\
+\midrule
+6  & 0   & 0   & 0   \\
+8  & 0   & 0   & 0   \\
+10 & 0   & 0   & 0   \\
+12 & 0   & N/A & N/A \\
+14 & 0   & N/A & N/A \\
+16 & 1   & N/A & N/A \\
+18 & 16  & N/A & N/A \\
+20 & 221 & N/A & N/A \\
+22 & N/A & N/A & N/A \\
+\bottomrule
+\end{tabular}
+}
+\caption{SAT optimization solver results}
+\label{table:mip-results}
+\end{table}
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{img/SAT-result.png}
     \caption{SAT optimization}
