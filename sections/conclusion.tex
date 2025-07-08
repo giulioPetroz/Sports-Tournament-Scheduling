@@ -1,5 +1,6 @@
 \section{Conclusions}
-% - CP and SMT, better\\
-% CP: 
-%   - CP-SAT even without implied constraints is the best, interesting to do other test using flat -p>1 using multithreading (CP-SAT),
-%   - 
+This report explored the Sports Tournament Scheduling (STS) problem with CP, SAT, SMT and MIP. Across all approaches, the precomputation of the round-robin tournament matrix significantly sped up the search process by reducing the search space and ensuring fundamental schedule properties.
+
+While CP, SAT, SMT, and MIP models generally yielded comparable results, CP and SMT demonstrated slightly better performance. OR-Tools CP-SAT, for the  CP model, and Z3, for the SMT model, were able to solve instances up to N=22 to optimality within the time limits. In contrast, the best performing SAT solver, Z3, reached N=20, and the best MIP solver, SCIP, also reached N=20.
+
+The experimental results presented in this report were conducted under single-threaded conditions. Therefore, a promising avenue for further performance improvement would be to explore the benefits of parallelism, leveraging multi-threading capabilities to potentially solve larger instances or achieve faster optimal solutions.
