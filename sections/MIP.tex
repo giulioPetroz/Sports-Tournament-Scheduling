@@ -1,7 +1,6 @@
 \section{MIP}
 \subsection{Decision variables}
 \subsubsection{match\_schedule}
-% The binary decision variables $match\_schedule_{w,p,m}$ are equal to 1 if and only if in week $w \in W$ and period $p \in P$ match $m \in M$ is played.
 For each $w \in W$ and $p \in P$, the binary
 $$
 match\_schedule_{w,p,m} = 1
@@ -13,40 +12,38 @@ For each week $w \in W$ and period $p \in P$
 $$  
 flip\_slot_{w,p} = a \in \{0, 1\}  
 $$  
-determines which team of the match $rb_{p, w} = (t_1, t_2)$ is assigned as the home team scheduled in week $w$ and period $p$. Specifically, $a = 0$ means $t_1$ plays at home and $t_2$ away, while $a = 1$ means the assignment is reversed.
+determines which team from match $rb_{p, w} = (t_1, t_2)$ in week w and period p is assigned as the home team. Specifically, $a = 0$ means $t_1$ plays at home and $t_2$ away, while $a = 1$ means the assignment is reversed.
 
 \subsubsection{team periods of play}
-% The binary variables $TP_{t,w,p}$ are used to constrain each team to playing at most twice in the same period. $TP_{t,w,p} = 1$ if and only if team t plays in week w and period p. 
-For each week $t \in T$, $w \in W$ and $p \in P$, the binary
+For each $t \in T$, $w \in W$ and $p \in P$, the binary
 $$
 TP_{t,w,p} = 1
 $$
-if and only if team t plays in week w and period p.
+if, and only if, team t plays in week w and period p.
 
 \subsubsection{home games counter}
-% To compute the common objective function D in MIP, it is necessary to introduce an array of auxiliary integer variables H, such that $H_t$ is the number of home games team t plays, $H_t \in [0, n-1]$.
 For each team $t \in T$, the integer  
 $$  
 H_t = h \in [1, \dots, N-1]
 $$  
-determines the total number of home games assigned to team $t$ throughout the tournament.% Its value is derived from the assignments of the decision variables $matches$ and $flip\_slot$.
+determines the total number of home games assigned to team $t$ throughout the tournament.
 
 \subsection{Objective Function}
-The integer variable $D \in [1, \dots, N-1]$, previously referred to as max\_imbalance, is computed as the maximum difference between the number of games played at home and away between all teams. We first find for each team the number of games played at home (2), and then constrain D as being greater or equal than the difference of home and away games for each team. Given that we have a minimization problem this is effectively equivalent to computing the max: 
+The model's objective is to minimize the maximum absolute difference between the number of home and away games played by any team. This maximum difference is quantified by the integer variable $D \in [1, \dots, N-1]$, which was previously referred to as $\text{max\_imbalance}$. We first find, for each team, the number of games played at home (2), and then constrain D as being greater or equal than the difference of home and away games for each team. Given that we have a minimization problem, this is effectively equivalent to computing the max: 
 $$\begin{cases}
     \min d \\
     d = \max_t |home_t - away_t|
 \end{cases} = \begin{cases}
     \min d \\
     d \geq |home_t - away_t| \ \forall t \in T
-\end{cases}$$The absolute value of the difference is not computed explicitly but is decomposed into 2 inequalities (3)(4). Finally, we look for the minimum of D (1)
+\end{cases}$$The absolute value of the difference is not computed explicitly but is decomposed into 2 inequalities (3)(4). Finally, we look for the minimum of D (1).
 
 \begin{align}
     \min \ &D \\
     H_t =& \sum_{w \in W, m \in M} \mathbbm{1}[flip\_slot_{w,p} = 0 \land rb_{m,w,0} = t] \notag \\
     +& \sum_{w \in W, m \in M} \mathbbm{1}[flip\_slot_{w,p} = 1 \land rb_{m, w,1} = t] \hspace{20px}  && \forall t \in T\\
-    D &\geq 2H_t - (n-1) && \forall t \in T\\
-    D & \geq -(2 H_t - (n-1)) && \forall t \in T
+    D &\geq 2H_t - (N-1) && \forall t \in T\\
+    D & \geq -(2 H_t - (N-1)) && \forall t \in T
 \end{align}
 
 \subsection{Constraints}
@@ -68,10 +65,10 @@ The constraint on teams playing at most twice in the same period is imposed by f
 
 \subsection{Validation}
 \subsubsection*{Experimental design}
-The model is written in Python by making use of the PuLP library and the solvers tested on the MIP model were: CBC 2.10.3, HiGHS 1.10.0, CPLEX 22.1.1 and SCIP 5.5.0 with their default parameters. The time elapsed to find an optimal solution, within the 300 second time limit, was measured for each solver. All tests were run on a single core of an Intel i7-10750H CPU.
+The model is written in Python by making use of the PuLP library. The solvers tested on the model were: CBC 2.10.3, HiGHS 1.10.0, CPLEX 22.1.1 and SCIP 5.5.0, all used with their default parameters. The time elapsed to find an optimal solution, within the 300 second time limit, was measured for each solver up to N=24. All tests were run on a single core of an Intel i7-10750H CPU.
 
 \subsubsection*{Experimental results}
-As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn't able to find the optimal solution for n greater than 14. CPLEX, instead, is the fastest up to n=14 but after n=16 it stops finding a solution. HiGHS was able to find an optimal schedule up to n=18 and SCIP, the best performer of the four, was able to reach n=20.
+As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn't able to find the optimal solution for n greater than 14. CPLEX, instead, is the fastest up to N=14 but after N=16 it stops finding a solution. HiGHS was able to find an optimal schedule up to N=18 and SCIP, the best performer of the four, was able to reach N=20.
 
 \begin{table}[htbp]
 \centering
@@ -79,7 +76,7 @@ As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn
 {%
 \begin{tabular}{|c|c|c|c|c|}
 \toprule
-\textbf{n} & \textbf{CBC} &\textbf{HiGHS} & \textbf{CPLEX} & \textbf{SCIP} \\
+\textbf{N} & \textbf{CBC} &\textbf{HiGHS} & \textbf{CPLEX} & \textbf{SCIP} \\
 \midrule
 6 & 0 & 0 & 0 & 0 \\
 8 & 0 & 0 & 0 & 0 \\
