@@ -41,9 +41,15 @@ def make_grouped_table(models, solvers, strategy_name):
             for model, short in zip(models, MODEL_SHORT):
                 key = f"{model}_{solver}"
                 entry = results[n].get(key)
-                if entry and entry.get("optimal") and entry.get("sol"):
-                    t = entry.get("time")
-                    cell = str(t) if t is not None else "N/A"
+                if entry and entry.get("sol"):
+                    obj = entry.get("obj")
+                    if obj is not None:
+                        if obj == 1:
+                            cell = "\\textbf{1}"
+                        else:
+                            cell = str(obj)
+                    else:
+                        cell = "N/A"
                 else:
                     cell = "N/A"
                 row.append(cell)
@@ -83,7 +89,7 @@ def make_grouped_table(models, solvers, strategy_name):
     latex += "\\bottomrule\n"
     latex += "\\end{tabular}%\n"
     latex += "}\n"
-    latex += f"\\caption{{CPU time in seconds for \\textit{{{strategy_name}}}}}\n"
+    latex += f"\\caption{{Objective values for \\textit{{{strategy_name}}}}}\n"
     latex += "\\end{table}\n"
 
     print(f"\n===== LaTeX Table for {strategy_name} =====\n")
