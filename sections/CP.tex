@@ -22,7 +22,7 @@ determines which team is assigned as the home team for the match $(t_1, t_2)$ sc
 \subsubsection{\text{home\_games}}  
 For each team $t \in T$  
 $$  
-home\_games_{t} = h \in [1, \dots, N-1]  
+home\_games_{t} = h \in [0, \dots, N-1]  
 $$  
 determines the total number of home games assigned to team $t$ throughout the tournament. Its value is derived from the assignments of the decision variables $matches$ and $flip\_slot$.
 
@@ -100,7 +100,7 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
 The model was implemented in MiniZinc and validated through a series of experiments designed to assess solver performance under various model configurations and search strategies.
 
 \textbf{Hardware and Software:}
-Experiments were executed on a MacBook Air M1 equipped with an 8-core CPU. The following solvers were employed: \textit{Gecode}, \textit{Chuffed} and \textit{OR-Tools CP-SAT}. 
+Experiments were executed on a MacBook Air M1 equipped with an 8-core CPU. The following solvers were employed: \textit{Gecode 6.3.0}, \textit{Chuffed 0.13.2} and \textit{OR-Tools CP-SAT 9.12.4544}. 
 The same time limit of $300$ seconds was imposed for each individual problem instance.
 
 \textbf{Model Configurations:}
@@ -130,6 +130,7 @@ In the following tables, we report CPU execution times for different solvers and
     \item \texttt{complete} denotes the full model with both implied and symmetry breaking constraints
 \end{itemize}
 
+
 \begin{table}[htbp]
 \centering
 \small
@@ -140,19 +141,19 @@ In the following tables, we report CPU execution times for different solvers and
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
   & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB \\
 \midrule
-6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-8 & 6 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-10 & N/A & N/A & N/A & N/A & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
-12 & N/A & N/A & N/A & N/A & 5 & 1 & 2 & 4 & 3 & 2 & 2 & 3 \\
-14 & N/A & N/A & N/A & N/A & 188 & 20 & 184 & 292 & 4 & 6 & 6 & 6 \\
-16 & N/A & N/A & N/A & N/A & N/A & N/A & 276 & N/A & 15 & 28 & 35 & 15 \\
-18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 261 & 34 & 43 & 237 \\
-20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 83 & 66 & 79 & 95 \\
-22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & 234 & 185 & 135 & N/A \\
+6 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+10 & N/A & 3 & 3 & 5 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+12 & N/A & 3 & 3 & 3 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+14 & N/A & 5 & 5 & 5 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+16 & N/A & N/A & N/A & 5 & N/A & N/A & \textbf{1} & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+18 & N/A & N/A & N/A & N/A & N/A & N/A & 9 & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & N/A \\
 \bottomrule
 \end{tabular}%
 }
-\caption{CPU time in seconds for finding the \textit{optimal solution} using \textit{Default Search Strategy (Solver's Default)}}
+\caption{Objective values using \textit{Default Search Strategy (Solver's Default)}}
 \end{table}
 
 \begin{table}[htbp]
@@ -165,19 +166,22 @@ In the following tables, we report CPU execution times for different solvers and
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
   & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB \\
 \midrule
-6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-8 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-10 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
-12 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 54 & 55 & 58 & 81 \\
-14 & 4 & 7 & 4 & 4 & N/A & 54 & 33 & N/A & N/A & N/A & N/A & N/A \\
-16 & N/A & N/A & 189 & 47 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+6 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+10 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+12 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A \\
+16 & 7 & 3 & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 \bottomrule
 \end{tabular}%
 }
-\caption{CPU time in seconds for finding the \textit{optimal solution} using \textit{Sequential Custom Search Strategy}}
+\caption{Objective values using \textit{Sequential Custom Search Strategy}}
 \end{table}
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \small
 \resizebox{\textwidth}{!}{%
@@ -187,15 +191,22 @@ In the following tables, we report CPU execution times for different solvers and
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
   & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB & bs & complete & noIMPL & noSB \\
 \midrule
-6 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-8 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
-10 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
-12 & 0 & 0 & 0 & 0 & 8 & 1 & 3 & 2 & 54 & 62 & 59 & 81 \\
-14 & 1 & 5 & 1 & 0 & N/A & 84 & 183 & 145 & N/A & N/A & N/A & N/A \\
-16 & 181 & 19 & 1 & 6 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
-18 & N/A & 3 & N/A & 245 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+6 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+10 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+12 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A \\
+16 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+18 & N/A & \textbf{1} & N/A & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 \bottomrule
 \end{tabular}%
 }
-\caption{CPU time in seconds for finding the \textit{optimal solution} using \textit{Relax-and-Reconstruct (LNS) Strategy}}
+\caption{Objective values using \textit{Relax-and-Reconstruct (LNS) Strategy}}
 \end{table}
+\paragraph{Results Interpretation}
+
+The experimental results show that the \texttt{CP-SAT} solver, with its default search strategy, consistently delivers the best performance. Similarly, \texttt{Chuffed} also achieves its best results with its default strategy. Moreover, combining Sequential Search with the Relax-and-Reconstruct (LNS) strategy improves \texttt{Gecode} by solving larger instances and finding valid or optimal solutions where the default did not succeed.
+
+\end{document}
