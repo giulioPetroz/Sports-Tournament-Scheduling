@@ -165,14 +165,24 @@ for solver_id in solvers:
     # Solution output
     match LpStatus[prob.status]:
         case "Optimal":  # Found optimal solution
-            result[solver_id] = {
-                "time": int(end - start),
-                "optimal": True,
-                "obj": value(prob.objective),
-                "sol": format_schedule(
-                    period_assign, home_away_assign, week_matchups, n
-                ),
-            }
+            if (
+                solver_id == "CPLEX" and int(end - start) > 300
+            ):  # Fix for CPLEX sometimes not stopping at timeout
+                result[solver_id] = {
+                    "time": timeout,
+                    "optimal": False,
+                    "obj": None,
+                    "sol": [],
+                }
+            else:
+                result[solver_id] = {
+                    "time": int(end - start),
+                    "optimal": True,
+                    "obj": value(prob.objective),
+                    "sol": format_schedule(
+                        period_assign, home_away_assign, week_matchups, n
+                    ),
+                }
         case "Not optimal":  # No optimality guarantee
             result[solver_id] = {
                 "time": timeout,
