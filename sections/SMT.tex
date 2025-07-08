@@ -18,12 +18,12 @@ To optimize the balance of the number of games played at home and away for each 
 \begin{itemize}
     \item $flip\_slot_{p,w} \in \{\text{true}, \text{false}\}$: similarly to other models, it defines which team plays at home and which away in the matchup $(t_1, t_2)$ in week w and period p. If the value is false, $t_1$ plays at home, if, instead, it is true, then $t_2$ is the one playing at home.
     
-    \item $homeE_{p,w},\, awayE_{p,w} \in T$: are, respectively, the effective home and effective away teams after the slot flip decisions.
+    \item $homeEff_{p,w},\, awayEff_{p,w} \in T$: are, respectively, the effective home and effective away teams after the slot flip decisions.
 \end{itemize}
 
 \subsection{Objective Function}
 
-The optimization goal is to minimize the maximum imbalance $k$ between the number of home and away games played by each team throughout the tournament. Formally,
+The optimization goal is to minimize the maximum imbalance $k$ between the number of home and away games played by each team, respectively $H_t$ and $A_t$, throughout the tournament. Formally,
 
 \[
 k^* = \min \big\{\, k \mid \forall t \in T : |H_t - A_t| \leq k \big\}
@@ -31,15 +31,15 @@ k^* = \min \big\{\, k \mid \forall t \in T : |H_t - A_t| \leq k \big\}
 
 where:
 \[
-H_t = \sum_{p,w} \mathbbm{1}[\,homeE_{p,w} = t\,], 
+H_t = \sum_{p,w} \mathbbm{1}[\,homeEff_{p,w} = t\,], 
 \quad
-A_t = \sum_{p,w} \mathbbm{1}[\,awayE_{p,w} = t\,].
+A_t = \sum_{p,w} \mathbbm{1}[\,awayEff_{p,w} = t\,].
 \]
 The effective home and away variables are computed by considering slot flips:
 
 \begin{align*}
-homeE_{p,w} =& \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), \\
-awayE_{p,w} =& \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
+homeEff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), \\
+awayEff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
 \end{align*}
 where ite stands for "if then else" statement.
 
@@ -92,9 +92,27 @@ match\_schedule_{0,0,0} = \text{true}.
 
 \subsection{Validation}
 
-\subsubsection{Experimental design}
+\subsubsection{Experimental Design}
+We encode both the satisfiability and optimization phases in QF\_LIA (quantifier-free linear integer arithmetic) because it lets us combine Boolean decisions with integer sums and comparisons directly, avoiding complex encodings of counters in pure SAT.
 
-The SMT model is implemented in Python using SMT-LIB to interface with Z3 and CVC5 solvers. A two-step approach is followed: first, a feasible schedule satisfying all base constraints is found (\textbf{Satisfiability}); then, a binary search is performed in the range $[1,\, \lfloor(N-1)/2\rfloor]$ to find the minimal imbalance $k$ (\textbf{Optimization}). For each tested value of $k$ in the search, a new \texttt{.smt2} file is generated, resulting in approximately $\log_2(N)$ separate files for the optimization phase, while only one \texttt{.smt2} file is needed for the satisfiability phase. Experiments are run with a time limit of 300 seconds to evaluate solver efficiency and scalability for different instance sizes $N$.
+Solver performance is measured in two stages:
+\begin{enumerate}
+  \item \textbf{Satisfiability}: Produce a single \texttt{.smt2} file that encodes match assignments, period-limit constraints, and symmetry breaking as linear arithmetic formulas. The solver then finds an initial feasible schedule.
+  \item \textbf{Optimization}: Calculate the initial imbalance, then perform a binary search over 
+  \[
+    k \in \{1,2,\dots,\lfloor(N-1)/2\rfloor\}.
+  \]
+  For each candidate \(k\), generate a new \texttt{.smt2} file that
+  \begin{itemize}
+    \item reuses the base \(home/away\) assignments,
+    \item adds Boolean \texttt{flip\_slot} variables,
+    \item defines effective \(homeEff,awayEff\) via \texttt{ite},
+    \item asserts \(\lvert H_t - A_t\rvert \le k\) using integer counters \(H_t,A_t\).
+  \end{itemize}
+  This produces roughly \(\log_2 N\) optimization files.
+\end{enumerate}
+
+Each file is solved with a separate \texttt{subprocess.run} call to Z3 or CVC5, and we record the wall-clock time of each invocation. The “total runtime” in Table~\ref{table:smt-result} is the sum of all individual call durations, from the first satisfiability invocation through the last optimization call, without resetting the timer. A global 300 s timeout governs both phases.
 
 
 \subsubsection{Experimental results}
