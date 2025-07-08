@@ -2,23 +2,23 @@
 
 \subsection{Decision Variables}
 
-The SMT model is structured in two clearly defined tasks: \textbf{Satisfiability} and \textbf{Optimization}.
+Similarly to the SAT model, the SMT model is structured based on its two tasks: \textbf{Satisfiability} and \textbf{Optimization}.
 
 \subsubsection{Satisfiability}
 
-Decision variables for this task include:
+The decision variables for this task are:
 \begin{itemize}
-    \item $match\_schedule_{p,w,m} \in \{\text{true}, \text{false}\}$: true if and only if the match pair $m$ is scheduled in period $p$ of week $w$.
-    \item $home_{p,w} \in T$: the home team assigned to the match in period $p$ of week $w$.
-    \item $away_{p,w} \in T$: the away team assigned to the match in period $p$ of week $w$.
+    \item $match\_schedule_{p,w,m} \in \{\text{true}, \text{false}\}$: true if, and only if, the match $m \in M$ is scheduled for period $p \in P$ of week $w \in W$.
+    \item $home_{p,w} = t \in T$: if t is the home team in the match in period $p \in P$ of week $w \in W$.
+    \item $away_{p,w} = t \in T$: if t is the away team in the match in period $p \in P$ of week $w \in W$.
 \end{itemize}
 
 \subsubsection{Optimization}
-
-Additional variables for optimizing the home-away balance:
+To optimize the balance of the number of games played at home and away for each team, the following variables are utilized:
 \begin{itemize}
-    \item $flip\_slot_{p,w} \in \{\text{true}, \text{false}\}$: true if the home-away designation for the match in period $p$ of week $w$ is flipped.
-    \item $homeEff_{p,w},\, awayEff_{p,w} \in T$: effective home and away teams after considering the flip decision.
+    \item $flip\_slot_{p,w} \in \{\text{true}, \text{false}\}$: similarly to other models, it defines which team plays at home and which away in the matchup $(t_1, t_2)$ in week w and period p. If the value is false, $t_1$ plays at home, if, instead, it is true, then $t_2$ is the one playing at home.
+    
+    \item $homeE_{p,w},\, awayE_{p,w} \in T$: are, respectively, the effective home and effective away teams after the slot flip decisions.
 \end{itemize}
 
 \subsection{Objective Function}
@@ -30,35 +30,30 @@ k^* = \min \big\{\, k \mid \forall t \in T : |H_t - A_t| \leq k \big\}
 \]
 
 where:
-
 \[
-H_t = \sum_{p,w} [\,homeEff_{p,w} = t\,], 
-\quad 
-A_t = \sum_{p,w} [\,awayEff_{p,w} = t\,].
+H_t = \sum_{p,w} \mathbbm{1}[\,homeE_{p,w} = t\,], 
+\quad
+A_t = \sum_{p,w} \mathbbm{1}[\,awayE_{p,w} = t\,].
 \]
+The effective home and away variables are computed by considering slot flips:
 
-The effective home-away assignment considers potential flips:
-
-\[
-homeEff_{p,w} = \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), 
-\quad 
-awayEff_{p,w} = \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
-\]
+\begin{align*}
+homeE_{p,w} =& \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), \\
+awayE_{p,w} =& \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
+\end{align*}
+where ite stands for "if then else" statement.
 
 \subsection{Constraints}
 
-\subsubsection{Unique match assignment per slot}
+\subsubsection{Each match is assigned to a unique period each week}
 
-Each period-week slot must host exactly one match:
+Each period in each week is assigned to exactly one match:
 
 \[
 \forall p \in P,\, w \in W: 
 \sum_{m \in M} match\_schedule_{p,w,m} = 1.
 \]
-
-\subsubsection{Each match pair used exactly once per week}
-
-Each pair of teams can only be assigned once each week:
+Each match is assigned to exactly one period each week:
 
 \[
 \forall m \in M,\, w \in W: 
@@ -66,8 +61,7 @@ Each pair of teams can only be assigned once each week:
 \]
 
 \subsubsection{Binding team assignments}
-
-If a match is scheduled, the home and away teams must match the predetermined pairs $rb$:
+The teams playing in the scheduled matches in $match\_schedule$ are linked to the corresponding variables $home$ and $away$ based on the values of $rb$ as follows:
 
 \[
 \forall p \in P,\, w \in W: 
@@ -78,7 +72,7 @@ match\_schedule_{p,w,m} \wedge home_{p,w} = rb_{m,w,0} \wedge away_{p,w} = rb_{m
 
 \subsubsection{Every team plays at most twice in the same period}
 
-For each team $t$ and each period $p$, we count how many times $t$ appears either as home or away in that period over all weeks and require that this total does not exceed two:
+For each team $t$ and each period $p$, we count how many times $t$ appears either as home or away in that period over all weeks and constraint the count to not exceed 2:
 
 \[
 \forall t \in T,\, p \in P: 
@@ -90,18 +84,10 @@ For each team $t$ and each period $p$, we count how many times $t$ appears eithe
 
 \subsubsection{Symmetry breaking}
 
-To reduce equivalent permutations of the solutions, fix the initial assignment:
+To reduce equivalent permutations of the solutions, the first match is fixed:
 
 \[
 match\_schedule_{0,0,0} = \text{true}.
-\]
-
-\subsubsection{Imbalance constraint}
-
-Ensure that the maximum allowed imbalance $k$ is respected:
-
-\[
-|H_t - A_t| \leq k.
 \]
 
 \subsection{Validation}
