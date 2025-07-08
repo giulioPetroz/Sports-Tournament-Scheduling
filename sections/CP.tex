@@ -38,11 +38,11 @@ The value of $\text{max\_imbalance}$ is determined by looking for the minimum in
 \[ \forall t \in T : \left| 2 \times \text{home\_games}_{t} - (N-1) \right| \leq \text{max\_imbalance} \]
 This formulation is derived from the difference between a team's home games and away games: $|\text{home\_games}_t - \text{away\_games}_t|$. Since \\ $\text{home\_games}_{t} + \text{away\_games}_{t} = N-1$ (total games), expressing $\text{away\_games}_t$ as a function of the other quantities and substituting it in the starting expression, yields $2 \times \text{home\_games}_{t} - (N-1)$. By enforcing that this score must be less than or equal to $\text{max\_imbalance}$ for every team, we constrain the variable to being greater than the maximum.
 
-To further support a fair and computationally efficient solution, the model includes a weekly balancing condition, which helps reduce the search space by ensuring that within each week $w$, the number of matches where the second team plays at home ($\text{flip\_slot}_{p, w} = 1$) is roughly half of the total matches $|P|$, with a maximum deviation of 1:
+The matchups inside $rb$ have an unbalanced structure: the team with the smaller identifier is always in the first slot, and the team with the larger identifier in the second. To guide the search towards more balanced solutions, we introduce the following constraint:
 \[
 \forall w \in W : \left| \sum_{p \in P} \text{flip\_slot}_{p, w} - \left\lfloor \frac{|P|}{2} \right\rfloor \right| \leq 1.
 \]
-This guides the solver toward balanced assignments week by week and helps prune highly imbalanced configurations.
+This condition ensures that within each week, the number of matches where the second team plays at home is roughly half of the total matches. By balancing the use of flip\_slot values, the solver is guided to assign home games more equitably, ensuring that teams with smaller IDs can play away and teams with higher IDs can play at home. This contributes to balancing the number of home and away games for each team, ultimately speeding up the search for an optimal solution.
 
 \subsubsection{Objective}
 The objective is to \textbf{minimize $\text{max\_imbalance}$}:
