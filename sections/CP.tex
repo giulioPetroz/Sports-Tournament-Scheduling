@@ -1,7 +1,6 @@
-% TODO: add reference to solvers
 \section{CP Model}
 \subsection{Decision Variables}
-This model utilizes two primary decision variables to construct the tournament schedule and assign home/away teams for each match.
+This model utilizes two primary decision variable matrices to construct the tournament schedule and assign home/away teams for each match.
 
 \subsubsection{\text{matches}}
 For each period $p \in P$ and week $w \in W$
@@ -16,7 +15,7 @@ For each period $p \in P$ and week $w \in W$
 $$  
 flip\_slot_{p,w} = a \in \{0, 1\}  
 $$  
-determines which team is assigned as the home team for the match scheduled in week $w$ and period $p$. Specifically, $a = 0$ means the first team listed plays at home, while $a = 1$ means the second team plays at home.
+determines which team is assigned as the home team for the match $(t_1, t_2)$ scheduled in week $w$ and period $p$. Specifically, $a = 0$ means that $t_1$ plays at home while $t_2$ away; on the contrary, $a = 1$ means $t_2$ plays at home and $t_1$ away.
 
 
 \subsection{Auxiliary Variables}
@@ -30,14 +29,14 @@ determines the total number of home games assigned to team $t$ throughout the to
 
 \subsection{Objective Function}
 
-The model's objective is to quantify and minimize disparities in home game assignments through the $\text{max\_imbalance}$ variable.
+The model's objective is to minimize disparities in the number of home and away games through the $\text{max\_imbalance}$ variable.
 
 \subsubsection{Objective Variable: \text{max\_imbalance}}\label{objective}
-The integer variable $\text{max\_imbalance} \in [1, \dots, N-1]$ quantifies the maximum absolute disparity in home game assignments across all teams. The lower bound of 1 acknowledges that perfect balance ($\text{max\_imbalance}=0$) is not achievable for an odd number of total games ($N-1$ games). The upper bound of $N-1$ represents the theoretical maximum possible deviation, occurring if a team plays all its games either at home or away.
+The integer variable $\text{max\_imbalance} \in [1, \dots, N-1]$ quantifies the maximum absolute disparity in home and away game assignments across all teams. The lower bound of 1 is the best possible balance score, $\text{max\_imbalance}=0$ is not achievable for an odd number of games, $N-1$. The upper bound of $N-1$ represents the theoretical maximum possible deviation, occurring if a team plays all its games either at home or away.
 
-The value of $\text{max\_imbalance}$ is determined by the following fairness constraint:
+The value of $\text{max\_imbalance}$ is determined by looking for the minimum integer satisfying the following fairness constraints:
 \[ \forall t \in T : \left| 2 \times \text{home\_games}_{t} - (N-1) \right| \leq \text{max\_imbalance} \]
-This formulation precisely defines the absolute "imbalance" for each team $t$. This imbalance is derived from the difference between a team's home games and away games. Since $\text{home\_games}_{t} + \text{away\_games}_{t} = N-1$ (total games), substituting the expression for $\text{away\_games}_{t}$ yields the imbalance for team $t$ as $2 \times \text{home\_games}_{t} - (N-1)$. By enforcing that the absolute value of this imbalance for every team must be less than or equal to $\text{max\_imbalance}$, this variable effectively captures the largest such deviation among all teams, serving as the direct measure of the overall schedule's fairness.
+This formulation is derived from the difference between a team's home games and away games: $|\text{home\_games}_t - \text{away\_games}_t|$. Since \\ $\text{home\_games}_{t} + \text{away\_games}_{t} = N-1$ (total games), expressing $\text{away\_games}_t$ as a function of the other quantities and substituting it in the starting expression, yields $2 \times \text{home\_games}_{t} - (N-1)$. By enforcing that this score must be less than or equal to $\text{max\_imbalance}$ for every team, we constrain the variable to being greater than the maximum.
 
 To further support a fair and computationally efficient solution, the model includes a weekly balancing condition, which helps reduce the search space by ensuring that within each week $w$, the number of matches where the second team plays at home ($\text{flip\_slot}_{p, w} = 1$) is roughly half of the total matches $|P|$, with a maximum deviation of 1:
 \[
@@ -48,8 +47,7 @@ This guides the solver toward balanced assignments week by week and helps prune 
 \subsubsection{Objective}
 The objective is to \textbf{minimize $\text{max\_imbalance}$}:
 \[ \text{minimize } \text{max\_imbalance} \]
-This aims to achieve the fairest possible distribution of home and away games. An optimal solution would ideally yield $\text{max\_imbalance}=1$, meaning each team's home/away game count differs by at most one, which is the best possible outcome for an odd number of total games played.
-
+The aim is to achieve the fairest possible distribution of home and away games; an optimal solution has objective value $\text{max\_imbalance}=1$.
 
 \subsection{Constraints}
 \subsubsection{Core Constraints}
@@ -66,7 +64,7 @@ Implemented using the \texttt{global\_cardinality} global constraint.
 
 \subsubsection{Channeling Constraints}
 \begin{enumerate}
- \item \textbf{Calculation of Home Games:} This constraint defines the value of $\text{home\_games}_{t}$.
+ \item \textbf{Home games:} This constraint defines the value of $\text{home\_games}_{t}$.
 \[ \forall t \in T : \text{home\_games}_{t} = \sum_{p \in P, w \in W, s \in S} \mathbb{I}\left( \text{rb}_{\text{matches}_{p, w}, w, s} = t \land \text{flip\_slot}_{p, w} = s \right) \]
 The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if team $t$ is located in slot $s$ and that slot $s$ is designated as the home slot by $\text{flip\_slot}_{p,w}$.
 \end{enumerate}
@@ -85,11 +83,11 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
 \subsubsection{Symmetry Breaking Constraints}
 
 \begin{enumerate}
-    \item \textbf{Break period assignment symmetry using lexicographic ordering:} The order in which matches corresponding to $P$ are assigned within $\text{matches}$ for each week is symmetrical. This constraint breaks such symmetries by enforcing a lexicographical ordering, reducing the number of equivalent search paths.
+    \item \textbf{Break period assignment symmetry with lexicographic ordering:} The order in which matches corresponding to $P$ are assigned within $\text{matches}$ for each week is symmetrical. This constraint breaks such symmetries by enforcing a lexicographical ordering, reducing the number of equivalent search paths.
     \[ (\text{matches}_{p, w})_{p \in P, w \in W} \succeq_{\text{lex}} (\text{matches}_{p, w})_{\text{reversed}(p) \in P, w \in W} \]
     This states that the sequence of $\text{matches}$ variables, when read in normal $(p,w)$ order, must be lexicographically greater than or equal to when read in $(p,w)$ order with $p$ reversed. This helps to fix one permutation of period assignments.
 
-    \item \textbf{Fix first match home assignment to break home/away symmetry:} This constraint eliminates global home/away assignment symmetry by fixing the home/away status of the first match.
+    \item \textbf{Fix first match home} This constraint eliminates global home/away assignment symmetry by fixing the home/away status of the first match.
     \[ \text{flip\_slot}_{0, 0} = 0 \]
 
 
@@ -97,15 +95,13 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
 
 \subsection{Validation}
 
-The model was implemented in MiniZinc and validated through a series of experiments designed to assess solver performance under various model configurations and search strategies.
-
 \subsubsection{Experimental Design}
 
-To comprehensively evaluate the performance of different solving strategies for the Sports Tournament Scheduling problem, a systematic experimental study was conducted.
+The model was implemented in MiniZinc and validated through a series of experiments designed to assess solver performance under various model configurations and search strategies.
 
 \textbf{Hardware and Software:}
 Experiments were executed on a MacBook Air M1 equipped with an 8-core CPU. The following solvers were employed: \textit{Gecode}, \textit{Chuffed} and \textit{OR-Tools CP-SAT}. 
-A uniform time limit of $300$ seconds was imposed for each individual problem instance.
+The same time limit of $300$ seconds was imposed for each individual problem instance.
 
 \textbf{Model Configurations:}
 Four configurations were tested: \texttt{baseline (core)}, \texttt{baseline+implied}, \texttt{baseline+symmetry breaking}, \texttt{full model}.
@@ -116,7 +112,7 @@ Three distinct search strategies were employed to analyze solver behavior, focus
 \begin{enumerate}
     \item \textbf{Default Search Strategy (Solver's Default):} Each solver relied entirely on its built-in decision heuristics and restart policies, serving as a baseline for their inherent capabilities.
 
-    \item \textbf{Sequential Custom Search Strategy:} A manually defined sequential search (\texttt{seq\_search}) was applied, prioritizing \texttt{matches} variables with \texttt{dom\_w\_deg} and \texttt{flip\_slot} variables with \texttt{first\_fail}, utilizing a \texttt{restart\_luby(100)} policy.
+    \item \textbf{Sequential Custom Search Strategy:} A manually defined sequential search (\texttt{seq\_search}) was applied, prioritizing \texttt{matches} variables with \texttt{dom\_w\_deg} and \texttt{flip\_slot} variables with \texttt{first\_fail}, utilizing a \\ \texttt{restart\_luby(100)} policy.
 
     \item \textbf{Relax-and-Reconstruct (LNS) Strategy:} This higher-level strategy incorporated \texttt{relax\_and\_reconstruct} on the \texttt{matches} variables (preserving 60\% of solution values), leveraging Large Neighborhood Search (LNS) techniques. It was layered on top of the "Sequential Custom Search Strategy."
 \end{enumerate}
@@ -126,7 +122,7 @@ To ensure a fair and controlled comparison under single-threaded conditions (ali
 
 
 \subsubsection{Experimental Results}
-In the following tables, we report CPU times for different solvers and four model configurations:
+In the following tables, we report CPU execution times for different solvers and the following four model configurations:
 \begin{itemize}
     \item \texttt{bs} denotes the baseline (core) model
      \item  \texttt{noIMPL} denotes the baseline with symmetry breaking constraints
