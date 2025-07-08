@@ -83,9 +83,12 @@ The indicator function $\mathbb{I}(\cdot)$ ensures that 1 is added to the sum if
 \subsubsection{Symmetry Breaking Constraints}
 
 \begin{enumerate}
-    \item \textbf{Break period assignment symmetry with lexicographic ordering:} The order in which matches corresponding to $P$ are assigned within $\text{matches}$ for each week is symmetrical. This constraint breaks such symmetries by enforcing a lexicographical ordering, reducing the number of equivalent search paths.
-    \[ (\text{matches}_{p, w})_{p \in P, w \in W} \succeq_{\text{lex}} (\text{matches}_{p, w})_{\text{reversed}(p) \in P, w \in W} \]
-    This states that the sequence of $\text{matches}$ variables, when read in normal $(p,w)$ order, must be lexicographically greater than or equal to when read in $(p,w)$ order with $p$ reversed. This helps to fix one permutation of period assignments.
+\item \textbf{Break period assignment symmetry with lexicographic ordering:}
+The order in which match periods are assigned within each week is symmetric, meaning that swapping period labels across weeks yields equivalent schedules. To eliminate this redundancy, we enforce a lexicographic ordering:
+$$
+(\text{matches}_{p, w})_{p \in P, w \in W} \succ_{\text{lex}} (\text{matches}_{p, w})_{\text{reversed}(p) \in P, w \in W}
+$$
+This ensures that the sequence of $\text{matches}$ variables, when read in normal $(p,w)$ order, must be lexicographically greater than or equal to when read with $p$ reversed. Due to the \texttt{all\_different} constraint on $\text{matches}_{p,w}$ per week, this comparison typically resolves early by comparing $\text{matches}_{0,0}$ and $\text{matches}_{|P| - 1,0}$. However, we prefer the full lexicographic constraint over a simple pairwise comparison because it provides stronger constraint propagation improving solver performance overall.
 
     \item \textbf{Fix first match home} This constraint eliminates global home/away assignment symmetry by fixing the home/away status of the first match.
     \[ \text{flip\_slot}_{0, 0} = 0 \]
