@@ -68,7 +68,7 @@ The constraint on teams playing at most twice in the same period is imposed by f
 The model is written in Python by making use of the PuLP library. The solvers tested on the model were: CBC 2.10.3, HiGHS 1.10.0, CPLEX 22.1.1 and SCIP 5.5.0, all used with their default parameters. The time elapsed to find an optimal solution, within the 300 second time limit, was measured for each solver up to N=24. All tests were run on a single core of an Intel i7-10750H CPU.
 
 \subsubsection*{Experimental results}
-As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn't able to find the optimal solution for n greater than 14. CPLEX, instead, is the fastest up to N=14 but after N=16 it stops finding a solution. HiGHS was able to find an optimal schedule up to N=18 and SCIP, the best performer of the four, was able to reach N=20.
+As shown in Table \ref{table:mip-results}, CBC has the worst performance, it isn't able to find the optimal solution for N greater than 14. CPLEX, instead, stops at N = 16 while HiGHS at N=18. SCIP is the best performing model, finding optimal solutions up to N=20 and stopping after that.
 
 \begin{table}[htbp]
 \centering
@@ -78,14 +78,14 @@ As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn
 \toprule
 \textbf{N} & \textbf{CBC} &\textbf{HiGHS} & \textbf{CPLEX} & \textbf{SCIP} \\
 \midrule
-6 & 0 & 0 & 0 & 0 \\
-8 & 0 & 0 & 0 & 0 \\
-10 & 1 & 0 & 0 & 0 \\
-12 & 2 & 1 & 0 & 5 \\
-14 & 45 & 12 & 5 & 17\\
-16 & N/A & 62 & 20 & 15\\
-18 & N/A & 218 & N/A & 192\\
-20 & N/A & N/A & N/A & 101\\
+6 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+10 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+12 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1}\\
+16 & N/A & \textbf{1} & \textbf{1} & \textbf{1}\\
+18 & N/A & \textbf{1} & N/A & \textbf{1}\\
+20 & N/A & N/A & N/A & \textbf{1}\\
 22 & N/A & N/A & N/A & N/A\\
 \bottomrule
 \end{tabular}
@@ -93,5 +93,3 @@ As shown in Table \ref{table:mip-results}, CBC had the worst performance, it isn
 \caption{MIP optimization solver results}
 \label{table:mip-results}
 \end{table}
-
-It was also verified that the solvers either find an optimal solution or no solution at all within the time limit.
