@@ -66,6 +66,17 @@ sudo docker run --platform linux/amd64 -v /opt/ibm/ILOG/:/opt/ibm/ILOG/ -it cdmo
 ```
 
 ---
+# Run all experiments
+Make run_all.sh executable:
+```bash
+sudo chmod +x run_all.sh
+```
+Execute run_all.sh:
+```bash
+./run_all.sh
+```
+
+---
 
 # Constraint Programming (CP)
 
