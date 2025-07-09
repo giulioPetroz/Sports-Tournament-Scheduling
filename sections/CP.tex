@@ -133,7 +133,6 @@ In the following tables, we report CPU execution times for different solvers and
     \item \texttt{complete} denotes the full model with both implied and symmetry breaking constraints
 \end{itemize}
 
-
 \begin{table}[htbp]
 \centering
 \small
@@ -146,18 +145,20 @@ In the following tables, we report CPU execution times for different solvers and
 \midrule
 6 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-10 & N/A & 3 & 3 & 5 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-12 & N/A & 3 & 3 & 3 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-14 & N/A & 5 & 5 & 5 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-16 & N/A & N/A & N/A & 5 & N/A & N/A & \textbf{1} & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-18 & N/A & N/A & N/A & N/A & N/A & N/A & 9 & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+10 & 9 & 3 & 3 & 5 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+12 & 11 & 3 & 3 & 3 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+14 & 13 & 5 & 5 & 5 & N/A & N/A & 4 & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+16 & 15 & N/A & N/A & 5 & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
+18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} & N/A \\
+22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & \textbf{1} & \textbf{1} & \textbf{1} \\
 \bottomrule
 \end{tabular}%
 }
 \caption{Objective values using \textit{Default Search Strategy (Solver's Default)}}
 \end{table}
+
+
 
 \begin{table}[htbp]
 \centering
@@ -174,7 +175,7 @@ In the following tables, we report CPU execution times for different solvers and
 10 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 12 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A \\
-16 & 7 & 3 & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+16 & 15 & 3 & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 18 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
@@ -198,8 +199,8 @@ In the following tables, we report CPU execution times for different solvers and
 8 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 10 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
 12 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} \\
-14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A \\
-16 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
+14 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & \textbf{1} & N/A & N/A & N/A & N/A & N/A \\
+16 & \textbf{1} & \textbf{1} & \textbf{1} & \textbf{1} & N/A & N/A & 13 & N/A & N/A & N/A & N/A & N/A \\
 18 & N/A & \textbf{1} & N/A & \textbf{1} & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 20 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
 22 & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A & N/A \\
@@ -208,8 +209,5 @@ In the following tables, we report CPU execution times for different solvers and
 }
 \caption{Objective values using \textit{Relax-and-Reconstruct (LNS) Strategy}}
 \end{table}
-\paragraph{Results Interpretation}
 
-The experimental results show that the \texttt{CP-SAT} solver, with its default search strategy, consistently delivers the best performance. Similarly, \texttt{Chuffed} also achieves its best results with its default strategy. Moreover, combining Sequential Search with the Relax-and-Reconstruct (LNS) strategy improves \texttt{Gecode} by solving larger instances and finding valid or optimal solutions where the default did not succeed.
-
-\end{document}
+\paragraph{Results Interpretation} The experimental results show that the \texttt{CP-SAT} solver, with its default search strategy, consistently delivers the best performance. Moreover, combining Sequential Search with the Relax-and-Reconstruct (LNS) strategy improves \texttt{Gecode} by solving larger instances and finding valid or optimal solutions where the default did not succeed.
