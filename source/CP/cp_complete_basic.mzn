@@ -52,7 +52,7 @@ array [P, W] of var 0..1: home_away;
 var 1..N - 1 : max_imbalance;
 
 % Number of home games for each team
-array [T] of var 1..N-1: home_games;
+array [T] of var 0..N-1: home_games;
 
 % Core Tournament Constraints
 
