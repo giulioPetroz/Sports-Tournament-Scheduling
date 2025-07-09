@@ -52,17 +52,21 @@ The satisfiability task is formalized by the following categories of proposition
 
 \subsection{Objective function}
 Similarly to the other approaches, the objective is to minimize the absolute difference between the number of games played at home and away for each team.
-Let $A_t$ be the number of times the team $t \in T$ plays away, the objective function translates into the following:
+Let $A_t$ and $H_t$ be the number of times the team $t \in T$ plays away and home respectively, the objective function translates into the following:
 $$
-k^* = \underset{k \in \mathbb{N}}{\text{argmax}} \left( \forall t \in T, A_t \geq k \right)
+k^* = \underset{k \in \mathbb{N}}{\text{argmax}} \left( \forall t \in T. (H_t \geq k \land A_t \geq k) \right)
 $$
 The chosen model allows to solve the optimization task using the $sts$ schedule computed in the satisfiability process. The optimization consists of a binary search of $k^*$ in the interval $[1, \lfloor\frac{N-1}{2}\rfloor]$. Since SAT doesn't directly support optimization, a new set of optimizing constraints is introduced for every instance of $k$. The constraints are defined by first binding $flip\_slots_{p, w}$ to $match\_to\_slots_{p, w}$:
 $$
     \forall p \in P, w \in W.(flip\_slot_{p, w} \leftrightarrow match\_to\_slots_{sts_{p, w, 0}, sts_{p, w, 1}})
 $$
-and then enforcing, for any $k$, that $t_1$ plays at least $k$ times away:
+and then enforcing, for any $k$, that $t_1$ plays at least $k$ times away and at $k$ times at home:
 $$
-    \forall p \in P, t_1 \in T.(AtLeastK(match\_to\_slots_{t_1, t_2} | t_2 \in T/\{t_1\}))
+\begin{aligned}
+    &\forall p \in P,\ \forall t_1 \in T.( \text{AtLeastK}(match\_to\_slots_{t_1,t_2} \mid t_2 \in T \setminus \{t_1\})\\
+    &\left. \land\ 
+    \text{AtLeastK}(\lnot match\_to\_slots_{t_1,t_2} \mid t_2 \in T \setminus \{t_1\}) \right)
+\end{aligned}
 $$
 
 \subsection{Constraints}
