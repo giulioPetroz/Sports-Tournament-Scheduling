@@ -230,7 +230,7 @@ def optimization_run(n, S0, solver, start_time):
         mid = (low + high) // 2
         timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
         fname = f"sts_optimization_n{n}_k{mid}.smt2"
-        optimization_generate_smt2(n, S0, mid, fname)  # 👉 sempre usa S0, non best!
+        optimization_generate_smt2(n, S0, mid, fname)
 
         THIS_DIR = os.path.dirname(__file__)
         smt_folder = os.path.join(THIS_DIR, "smt")
@@ -241,7 +241,7 @@ def optimization_run(n, S0, solver, start_time):
         lines = out.splitlines()
 
         if lines and lines[0] == "sat":
-            # Regex robusta: cattura anche newline tra Bool e true/false
+           
             pattern = re.compile(r"flip_(\d+)_(\d+)[\s\S]*?(true|false)", re.MULTILINE)
 
             flips = {}
@@ -255,7 +255,7 @@ def optimization_run(n, S0, solver, start_time):
             for p in range(P_):
                 row = []
                 for w in range(W_):
-                    h0, a0 = S0[p][w]  # sempre S0!
+                    h0, a0 = S0[p][w] 
                     row.append([a0, h0] if flips.get((p, w), False) else [h0, a0])
                 new.append(row)
 
