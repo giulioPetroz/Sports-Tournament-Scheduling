@@ -271,10 +271,20 @@ def solve_optimize(
         s_opt.add(
             at_least_k_seq([matches_to_slots[0][t2] for t2 in range(1, n)], mid, solver)
         )
+        s_opt.add(
+            at_least_k_seq([solver.Not(matches_to_slots[0][t2]) for t2 in range(1, n)], mid, solver)
+        )
         # last team
         s_opt.add(
             at_least_k_seq(
                 [solver.Not(matches_to_slots[t2][-1]) for t2 in range(0, n - 1)],
+                mid,
+                solver,
+            )
+        )
+        s_opt.add(
+            at_least_k_seq(
+                [matches_to_slots[t2][-1] for t2 in range(0, n - 1)],
                 mid,
                 solver,
             )
@@ -285,6 +295,14 @@ def solve_optimize(
                 at_least_k_seq(
                     [solver.Not(matches_to_slots[t2][t1]) for t2 in range(t1)]
                     + [matches_to_slots[t1][t2] for t2 in range(t1 + 1, n)],
+                    mid,
+                    solver,
+                )
+            )
+            s_opt.add(
+                at_least_k_seq(
+                    [matches_to_slots[t2][t1] for t2 in range(t1)]
+                    + [solver.Not(matches_to_slots[t1][t2]) for t2 in range(t1 + 1, n)],
                     mid,
                     solver,
                 )
