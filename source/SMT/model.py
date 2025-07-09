@@ -125,8 +125,6 @@ def satisfability_generate_smt2(n, fname):
     with open(smtpath, "w") as f:
         f.write("\n".join(lines))
 
-
-
 def satisfability_run(n, solver, start_time):
 
     fname = f"sts_satisfability_{n}.smt2"
@@ -203,14 +201,16 @@ def optimization_generate_smt2(n, S0, k, fname):
     # The difference (home games - away games) must be <= k,
     # and the opposite difference (away games - home games) must be <= k.
     for t in range(1, n + 1):
-        # Count of matches where team t plays at home or away (after flipping)
         H = " ".join(f"(ite (= home_eff_{p}_{w} {t}) 1 0)"
-                     for p in range(P) for w in range(W))
+                    for p in range(P) for w in range(W))
         A = " ".join(f"(ite (= away_eff_{p}_{w} {t}) 1 0)"
-                     for p in range(P) for w in range(W))
-        # Impose |H - A| <= k
+                    for p in range(P) for w in range(W))
+        # Bound imbalance
         lines.append(f"(assert (<= (- (+ {H}) (+ {A})) {k}))")
         lines.append(f"(assert (<= (- (+ {A}) (+ {H})) {k}))")
+        # Enforce total matches: must equal n-1
+        lines.append(f"(assert (= (+ {H} {A}) {n-1}))")
+
 
     # Request the solver to find a solution satisfying the constraints
     lines += ["(check-sat)", "(get-model)"]
@@ -220,43 +220,43 @@ def optimization_generate_smt2(n, S0, k, fname):
     with open(smtpath, "w") as f:
         f.write("\n".join(lines))
 
-
-
 def optimization_run(n, S0, solver, start_time):
 
-    k_hi = max(imbalance_of(S0, t) for t in range(1, n+1))
+    k_hi = max(imbalance_of(S0, t) for t in range(1, n + 1))
     best, best_k = S0, k_hi
-    low, high = 1, k_hi 
+    low, high = 1, k_hi
 
     while low <= high and time.time() - start_time < GLOBAL_TIMEOUT:
         mid = (low + high) // 2
         timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
         fname = f"sts_optimization_n{n}_k{mid}.smt2"
-        optimization_generate_smt2(n, best, mid, fname)
+        optimization_generate_smt2(n, S0, mid, fname)  # 👉 sempre usa S0, non best!
 
         THIS_DIR = os.path.dirname(__file__)
         smt_folder = os.path.join(THIS_DIR, "smt")
         smtpath = os.path.join(smt_folder, fname)
 
         out, _ = run_solver(solver, smtpath, timeout_left)
-        lines = out.strip().splitlines()
+        out = out.strip()
+        lines = out.splitlines()
 
         if lines and lines[0] == "sat":
-            flips = {}
-            for L in lines[1:]:
-                m = re.match(r"\(define-fun\s+flip_(\d+)_(\d+).* (true|false)\)", L)
-                if m:
-                    p, w, val = int(m.group(1)), int(m.group(2)), (m.group(3) == "true")
-                    flips[(p, w)] = val
+            # Regex robusta: cattura anche newline tra Bool e true/false
+            pattern = re.compile(r"flip_(\d+)_(\d+)[\s\S]*?(true|false)", re.MULTILINE)
 
-            P_, W_ = len(best), len(best[0])
+            flips = {}
+            matches = pattern.findall(out)
+            for m in matches:
+                p, w, val = int(m[0]), int(m[1]), (m[2] == "true")
+                flips[(p, w)] = val
+
+            P_, W_ = len(S0), len(S0[0])
             new = []
             for p in range(P_):
                 row = []
                 for w in range(W_):
-                    h0, a0 = best[p][w]
+                    h0, a0 = S0[p][w]  # sempre S0!
                     row.append([a0, h0] if flips.get((p, w), False) else [h0, a0])
-                row = row
                 new.append(row)
 
             best, best_k = new, mid
@@ -265,11 +265,12 @@ def optimization_run(n, S0, solver, start_time):
                 break
 
             high = mid - 1
+
         else:
+            print(f"UNSAT for k = {mid}")
             low = mid + 1
 
     return best, best_k
-
 
 # ==== MAIN ====
 
@@ -320,8 +321,6 @@ def solve_and_save(n, solver):
         print(f"OPTIMIZATION COMPLETE: best imbalance k* = {k_opt} in {total:.2f}s")
 
     save_json(n, solver, t1, S0, total, Sopt, k_opt, total < GLOBAL_TIMEOUT)
-
-
 
 
 def save_json(n, solver, t1, S0, total, Sopt, k_opt, optimal):
