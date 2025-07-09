@@ -208,9 +208,6 @@ def optimization_generate_smt2(n, S0, k, fname):
         # Bound imbalance
         lines.append(f"(assert (<= (- (+ {H}) (+ {A})) {k}))")
         lines.append(f"(assert (<= (- (+ {A}) (+ {H})) {k}))")
-        # Enforce total matches: must equal n-1
-        lines.append(f"(assert (= (+ {H} {A}) {n-1}))")
-
 
     # Request the solver to find a solution satisfying the constraints
     lines += ["(check-sat)", "(get-model)"]
