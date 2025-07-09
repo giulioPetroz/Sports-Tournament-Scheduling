@@ -12,7 +12,7 @@ For each week $w \in W$ and period $p \in P$
 $$  
 flip\_slot_{w,p} = a \in \{0, 1\}  
 $$  
-determines which team from match $rb_{p, w} = (t_1, t_2)$ in week w and period p is assigned as the home team. Specifically, $a = 0$ means $t_1$ plays at home and $t_2$ away, while $a = 1$ means the assignment is reversed.
+determines which team from match $rb_{m, w} = (t_1, t_2)$ in week w and period p is assigned as the home team. Specifically, $a = 0$ means $t_1$ plays at home and $t_2$ away, while $a = 1$ means the assignment is reversed.
 
 \subsubsection{team periods of play}
 For each $t \in T$, $w \in W$ and $p \in P$, the binary
@@ -24,18 +24,18 @@ if, and only if, team t plays in week w and period p.
 \subsubsection{home games counter}
 For each team $t \in T$, the integer  
 $$  
-H_t = h \in [1, \dots, N-1]
+H_t = h \in [0, \dots, N-1]
 $$  
 determines the total number of home games assigned to team $t$ throughout the tournament.
 
 \subsection{Objective Function}
 The model's objective is to minimize the maximum absolute difference between the number of home and away games played by any team. This maximum difference is quantified by the integer variable $D \in [1, \dots, N-1]$, which was previously referred to as $\text{max\_imbalance}$. We first find, for each team, the number of games played at home (2), and then constrain D as being greater or equal than the difference of home and away games for each team. Given that we have a minimization problem, this is effectively equivalent to computing the max: 
 $$\begin{cases}
-    \min d \\
-    d = \max_t |home_t - away_t|
+    \min D \\
+    D = \max_t |home_t - away_t|
 \end{cases} = \begin{cases}
-    \min d \\
-    d \geq |home_t - away_t| \ \forall t \in T
+    \min D \\
+    D \geq |home_t - away_t| \ \forall t \in T
 \end{cases}$$The absolute value of the difference is not computed explicitly but is decomposed into 2 inequalities (3)(4). Finally, we look for the minimum of D (1).
 
 \begin{align}
@@ -56,7 +56,7 @@ Due to how the decision variables are defined, it was necessary to impose that e
 \end{align}
 
 \subsubsection{Each team plays at most twice in the same period}
-The constraint on teams playing at most twice in the same period is imposed by first linking the variables of $match\_schedule$ to those in TP based on the values in $rb$ (7) and then limiting the sum of periods of play to being smaller or equal than 2 (8). 
+The constraint is imposed by first linking the variables of $match\_schedule_{w, p, m}$ to those in $TP_{t, w, p}$ based on the values in $rb_{m, w}$ (7) and then limiting the sum of periods of play to being smaller or equal than 2 (8). 
 
 \begin{align}
     TP_{t,w,p} &= match\_schedule_{w,p,m} \hspace{20px} \text{where}\ t \in rb_{m, w} \hspace{20px} \forall t \forall p  \forall w\\
@@ -65,7 +65,7 @@ The constraint on teams playing at most twice in the same period is imposed by f
 
 \subsection{Validation}
 \subsubsection*{Experimental design}
-The model is written in Python by making use of the PuLP library. The solvers tested on the model were: CBC 2.10.3, HiGHS 1.10.0, CPLEX 22.1.1 and SCIP 5.5.0, all used with their default parameters. The time elapsed to find an optimal solution, within the 300 second time limit, was measured for each solver up to N=24. All tests were run on a single core of an Intel i7-10750H CPU.
+The model is written in Python by making use of the PuLP library. The solvers tested on the model were: CBC 2.10.3, HiGHS 1.10.0, CPLEX 22.1.1 and SCIP 5.5.0, all used with their default parameters. The time elapsed to find an optimal solution, within the 300 second time limit, was measured for each solver up to $N=22$.
 
 \subsubsection*{Experimental results}
 As shown in Table \ref{table:mip-results}, CBC has the worst performance, it isn't able to find the optimal solution for N greater than 14. CPLEX, instead, stops at N = 16 while HiGHS at N=18. SCIP is the best performing model, finding optimal solutions up to N=20 and stopping after that.

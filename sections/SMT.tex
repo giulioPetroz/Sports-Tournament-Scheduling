@@ -1,8 +1,9 @@
 \section{SMT Model}
 
-\subsection{Decision Variables}
-
 Similarly to the SAT model, the SMT model is structured based on its two tasks: \textbf{Satisfiability} and \textbf{Optimization}.
+We encode both the satisfiability and optimization phases in QF\_LIA (Quantifier-Free Linear Integer Arithmetic) because it lets us combine Boolean decisions with integer sums and comparisons directly, avoiding complex encodings of counters in pure SAT.
+
+\subsection{Decision Variables}
 
 \subsubsection{Satisfiability}
 
@@ -16,9 +17,10 @@ The decision variables for this task are:
 \subsubsection{Optimization}
 To optimize the balance of the number of games played at home and away for each team, the following variables are utilized:
 \begin{itemize}
-    \item $flip\_slot_{p,w} \in \{\text{true}, \text{false}\}$: similarly to other models, it defines which team plays at home and which away in the matchup $(t_1, t_2)$ in week w and period p. If the value is false, $t_1$ plays at home, if, instead, it is true, then $t_2$ is the one playing at home.
+    \item $flip\_slot_{p,w} \in \{\text{true}, \text{false}\}$: % similarly to other models, it defines which team plays at home and which away in the matchup $(t_1, t_2)$ in week w and period p. 
+    if the value is false, $rb_{p, w, 0}=t_1$ plays at home; otherwise it is true, then $rb_{p, w, 1}=t_2$ is the one playing at home.
     
-    \item $homeEff_{p,w},\, awayEff_{p,w} \in T$: are, respectively, the effective home and effective away teams after the slot flip decisions.
+    \item $home\_eff_{p,w},\, away\_eff_{p,w} \in T$: are, respectively, the effective home and effective away teams after the slot flip decisions.
 \end{itemize}
 
 \subsection{Objective Function}
@@ -26,20 +28,20 @@ To optimize the balance of the number of games played at home and away for each 
 The optimization goal is to minimize the maximum imbalance $k$ between the number of home and away games played by each team, respectively $H_t$ and $A_t$, throughout the tournament. Formally,
 
 \[
-k^* = \min \big\{\, k \mid \forall t \in T : |H_t - A_t| \leq k \big\}
+k^* = \underset{k \in \mathbb{N}}{\text{argmin}} \left( \forall t \in T. |H_t - A_t| \leq k \right)
 \]
 
 where:
 \[
-H_t = \sum_{p,w} \mathbbm{1}[\,homeEff_{p,w} = t\,], 
+H_t = \sum_{p,w} \mathbbm{1}[\,home\_eff_{p,w} = t\,], 
 \quad
-A_t = \sum_{p,w} \mathbbm{1}[\,awayEff_{p,w} = t\,].
+A_t = \sum_{p,w} \mathbbm{1}[\,away\_eff_{p,w} = t\,].
 \]
 The effective home and away variables are computed by considering slot flips:
 
 \begin{align*}
-homeEff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), \\
-awayEff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
+home\_eff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, away_{p,w},\, home_{p,w}), \\
+away\_eff_{p,w} =& \text{ite}(flip\_slot_{p,w},\, home_{p,w},\, away_{p,w}).
 \end{align*}
 where ite stands for "if then else" statement.
 
@@ -61,14 +63,12 @@ Each match is assigned to exactly one period each week:
 \]
 
 \subsubsection{Binding team assignments}
-The teams playing in the scheduled matches in $match\_schedule$ are linked to the corresponding variables $home$ and $away$ based on the values of $rb$ as follows:
+The teams playing in $match\_schedule_{p, w, m}$ are linked to the corresponding variables $home_{p, w}$ and $away_{p, w}$ based on the values of $rb_{m, w}$ as follows:
 
-\[
-\forall p \in P,\, w \in W: 
-\bigvee_{m \in M} \big(
-match\_schedule_{p,w,m} \wedge home_{p,w} = rb_{m,w,0} \wedge away_{p,w} = rb_{m,w,1}
-\big).
-\]
+$$
+\forall p \in P,\, w \in W.(match\_schedule_{p,w,m} \leftrightarrow (home_{p,w} = rb_{m,w,0} \ \wedge \ away_{p,w} = rb_{m,w,1})
+\big)
+$$
 
 \subsubsection{Every team plays at most twice in the same period}
 
@@ -93,31 +93,30 @@ match\_schedule_{0,0,0} = \text{true}.
 \subsection{Validation}
 
 \subsubsection{Experimental Design}
-We encode both the satisfiability and optimization phases in QF\_LIA (quantifier-free linear integer arithmetic) because it lets us combine Boolean decisions with integer sums and comparisons directly, avoiding complex encodings of counters in pure SAT.
 
 Solver performance is measured in two stages:
 \begin{enumerate}
-  \item \textbf{Satisfiability}: Produce a single \texttt{.smt2} file that encodes match assignments, period-limit constraints, and symmetry breaking as linear arithmetic formulas. The solver then finds an initial feasible schedule.
-  \item \textbf{Optimization}: Calculate the initial imbalance, then perform a binary search over 
+  \item \textbf{Satisfiability}: Produce a single \texttt{.smt2} file that encodes match assignments, period-limit, and symmetry breaking constraints as linear arithmetic formulas. The solver then finds an initial feasible schedule.
+  \item \textbf{Optimization}: Perform a binary search over 
   \[
-    k \in \{1,2,\dots,\lfloor(N-1)/2\rfloor\}.
+    k \in \{1,2,\dots,N/2\}.
   \]
   For each candidate \(k\), generate a new \texttt{.smt2} file that
   \begin{itemize}
-    \item reuses the base \(home/away\) assignments,
-    \item adds Boolean \texttt{flip\_slot} variables,
-    \item defines effective \(homeEff,awayEff\) via \texttt{ite},
+    \item has the base \(home/away\) assignments,
+    \item adds boolean \texttt{flip\_slot} variables,
+    \item defines effective \(home\_eff,away\_eff\) via \texttt{ite},
     \item asserts \(\lvert H_t - A_t\rvert \le k\) using integer counters \(H_t,A_t\).
   \end{itemize}
-  This produces roughly \(\log_2 N\) optimization files.
+  This produces \(\log_2(N) - 1\) optimization files.
 \end{enumerate}
 
-Each file is solved with a separate \texttt{subprocess.run} call to Z3 or CVC5, and we record the wall-clock time of each invocation. The “total runtime” in Table~\ref{table:smt-result} is the sum of all individual call durations, from the first satisfiability invocation through the last optimization call, without resetting the timer. A global 300 s timeout governs both phases.
-
+The total runtime is measured from the start of the satisfiability phase until either a solution for \(k = 1\) is found or the 300\,s timeout is reached.
+We tested the following solvers: Z3 4.15.1.0 and CVC5 1.3.0 and present our findings in table \ref{table:smt-result}. 
 
 \subsubsection{Experimental results}
 
-The experimental results show that Z3 performs significantly better than CVC5 in terms of solving time and scalability. Specifically, Z3 solved instances up to $N=22$ within the time limit, while CVC5 handled only smaller instances and degraded rapidly beyond $N=8$.
+The experimental results show that Z3 performs significantly better than CVC5 in terms of solving time and scalability. Specifically, Z3 solved instances up to $N=22$, while CVC5 handled only smaller instances up to $N=8$.
 
 \begin{table}[H]
 \centering
@@ -126,19 +125,19 @@ The experimental results show that Z3 performs significantly better than CVC5 in
 \toprule
 \textbf{N} & \textbf{Z3} & \textbf{CVC5} \\
 \midrule
-6  & \textbf{0}   & \textbf{0}   \\
-8  & \textbf{0}   & \textbf{1}   \\
-10 & \textbf{0}   & N/A \\
-12 & \textbf{0}   & N/A \\
-14 & \textbf{0}   & N/A \\
-16 & \textbf{0}   & N/A \\
-18 & \textbf{3}   & N/A \\
-20 & \textbf{14}  & N/A \\
-22 & \textbf{280} & N/A \\
+6  & \textbf{1}   & \textbf{1}   \\
+8  & \textbf{1}   & \textbf{1}   \\
+10 & \textbf{1}   & N/A \\
+12 & \textbf{1}   & N/A \\
+14 & \textbf{1}   & N/A \\
+16 & \textbf{1}   & N/A \\
+18 & \textbf{1}   & N/A \\
+20 & \textbf{1}  & N/A \\
+22 & \textbf{1} & N/A \\
 24 & N/A & N/A \\
 \bottomrule
 \end{tabular}
-\caption{SMT solver runtimes (in seconds)}
+\caption{SMT optimization solver results}
 \label{table:smt-result}
 \end{table}
 

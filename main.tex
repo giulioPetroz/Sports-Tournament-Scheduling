@@ -11,11 +11,11 @@
 \author{
   Cirone Cono, \texttt{cono.cirone@studio.unibo.it}
   \and
+  Petrozziello Giulio, \texttt{giulio.petrozziello@studio.unibo.it} 
+  \and
   Dardini Jacopo, \texttt{jacopo.dardini@studio.unibo.it}
   \and
   Formichella Gio, \texttt{gio.formichella@studio.unibo.it}
-  \and
-  Petrozziello Giulio, \texttt{giulio.petrozziello@studio.unibo.it} 
 }
 \date{}
 
@@ -33,7 +33,10 @@ We begin by considering the structure of a round-robin tournament: for $N$ teams
   \item It guarantees that each team plays exactly once per week.
   \item It ensures that each team plays against each other only once.
 \end{itemize}
-A balanced tournament design is a permutation of the order of games within each week that balances the number of home and away games for each team, and limits the number of times each team plays in the same period, as described in \cite{Lamken2006BalancedTournamentDesigns}. While the round-robin matrix defines the matchups, our models aim to compute an optimally balanced schedule by assigning these games to periods and slots in a way that satisfies the balancing constraints.
+A balanced tournament design is a permutation of the order of games within each week that limits the number of times each team plays in the same period, as described in \cite{Lamken2006BalancedTournamentDesigns}.
+While the round-robin matrix defines the matchups, our models aim to compute an optimally balanced schedule, minimizing the difference of home and away games for each team, by assigning games to periods and slots in a way that satisfies the balancing constraints. 
+All tests were run on a single core of an Intel i9-10900KF CPU. 
+
 
 \subsection{Notation}
 \begin{itemize}
@@ -43,7 +46,7 @@ A balanced tournament design is a permutation of the order of games within each 
   \item $M=\{m\ |\ m \in [0, ..., \frac{N}{2} - 1]\}$: weekly matchup identifiers.
   \item $W=\{w\ |\ w \in [0, ..., N-2]\}$: week identifiers.
   \item $S=\{s\ |\ s \in [0,1]\}$: slot identifiers, $s=0$ corresponds to playing at home and $s=1$ to playing away.
-  \item $rb$ is the precomputed round-robin matrix; $rb_{m, w, s}=t$ if team $t \in T$ plays in week $w \in W$ in match $m \in M$ and in slot $s \in S$.
+  \item $rb$: the precomputed round-robin matrix, where $rb_{m, w, s}=t$ if team $t \in T$ plays in week $w \in W$ in match $m \in M$ and in slot $s \in S$.
   
 \end{itemize}
 
