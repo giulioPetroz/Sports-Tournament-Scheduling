@@ -43,9 +43,9 @@ def imbalance_of(S, t):
     away = sum(1 for p in range(P) for w in range(W) if S[p][w][1] == t)
     return abs(home - away)
 
-# ==== PHASE 1 ====
+# ==== SATISFABILITY ====
 
-def phase1_generate_smt2(n, fname):
+def satisfability_generate_smt2(n, fname):
 
     THIS_DIR = os.path.dirname(__file__)
     smt_folder = os.path.join(THIS_DIR, "smt")
@@ -127,10 +127,10 @@ def phase1_generate_smt2(n, fname):
 
 
 
-def phase1_run(n, solver, start_time):
+def satisfability_run(n, solver, start_time):
 
-    fname = f"sts_phase1_{n}.smt2"
-    phase1_generate_smt2(n, fname)
+    fname = f"sts_satisfability_{n}.smt2"
+    satisfability_generate_smt2(n, fname)
 
     THIS_DIR = os.path.dirname(__file__)
     smt_folder = os.path.join(THIS_DIR, "smt")
@@ -170,9 +170,9 @@ def phase1_run(n, solver, start_time):
         S0.append(row)
     return "sat", S0, t1
 
-# ==== PHASE 2 ====
+# ==== OPTIMIZATION ====
 
-def phase2_generate_smt2(n, S0, k, fname):
+def optimization_generate_smt2(n, S0, k, fname):
 
     P, W = len(S0), len(S0[0])
 
@@ -182,7 +182,6 @@ def phase2_generate_smt2(n, S0, k, fname):
 
     # Initialize the SMT-LIB lines: set logic and request models
     lines = [
-        "; phase2: flip-only optimization",
         "(set-logic QF_LIA)",
         "(set-option :produce-models true)"
     ]
@@ -223,7 +222,7 @@ def phase2_generate_smt2(n, S0, k, fname):
 
 
 
-def phase2_run(n, S0, solver, start_time):
+def optimization_run(n, S0, solver, start_time):
 
     k_hi = max(imbalance_of(S0, t) for t in range(1, n+1))
     best, best_k = S0, k_hi
@@ -232,8 +231,8 @@ def phase2_run(n, S0, solver, start_time):
     while low <= high and time.time() - start_time < GLOBAL_TIMEOUT:
         mid = (low + high) // 2
         timeout_left = GLOBAL_TIMEOUT - (time.time() - start_time)
-        fname = f"sts_phase2_n{n}_k{mid}.smt2"
-        phase2_generate_smt2(n, best, mid, fname)
+        fname = f"sts_optimization_n{n}_k{mid}.smt2"
+        optimization_generate_smt2(n, best, mid, fname)
 
         THIS_DIR = os.path.dirname(__file__)
         smt_folder = os.path.join(THIS_DIR, "smt")
@@ -279,8 +278,8 @@ def solve_and_save(n, solver):
     header = f"\n=== n = {n}, solver = {solver.upper()} ==="
     print(header)
 
-    # Phase 1
-    status, S0, t1 = phase1_run(n, solver, start_time)
+    # Satisfiability
+    status, S0, t1 = satisfability_run(n, solver, start_time)
     if status != "sat":
         if status == "timeout":
             print(f"TIMEOUT")
@@ -290,10 +289,10 @@ def solve_and_save(n, solver):
         return
 
 
-    # Validate Phase 1
+    # Validate Satisfiability
     result = check_solution(S0, None, t1, False)
     if result != 'Valid solution':
-        print(f"Phase 1 checker FAILED: {result}")
+        print(f"Satisfiability checker FAILED: {result}")
         return
 
     elapsed = time.time() - start_time
@@ -302,23 +301,23 @@ def solve_and_save(n, solver):
         save_json(n, solver, t1, S0, t1, S0, None, False)
         return
 
-    print(f"PHASE 1 COMPLETE: valid schedule in {t1:.2f}s")
-    print(f"Starting Phase 2 (optimization)...")
+    print(f"SATISFIABILITY COMPLETE: valid schedule in {t1:.2f}s")
+    print(f"Starting Optimization...")
 
-    Sopt, k_opt = phase2_run(n, S0, solver, start_time)
+    Sopt, k_opt = optimization_run(n, S0, solver, start_time)
     total = time.time() - start_time
 
-    # Validate Phase 2
+    # Validate Optimization
     if Sopt:
         result = check_solution(Sopt, k_opt, total, True)
         if result != 'Valid solution':
-            print(f"Phase 2 checker FAILED: {result}")
+            print(f"Optimization checker FAILED: {result}")
             return
 
     if total >= GLOBAL_TIMEOUT:
-        print(f"TIMEOUT during Phase 2 after {total:.2f}s")
+        print(f"TIMEOUT during Optimization after {total:.2f}s")
     else:
-        print(f"PHASE 2 COMPLETE: best imbalance k* = {k_opt} in {total:.2f}s")
+        print(f"OPTIMIZATION COMPLETE: best imbalance k* = {k_opt} in {total:.2f}s")
 
     save_json(n, solver, t1, S0, total, Sopt, k_opt, total < GLOBAL_TIMEOUT)
 
