@@ -182,7 +182,7 @@ constraint forall(w in W)(
 ```
 
 
-It works like the previous `global_cardinality`: for a fixed week `w`, we collect all teams playing (in both slots of every match), and enforce that each team appears **exactly once** — using `[1 | t in T]` for both the minimum and maximum counts.
+It works like the previous `global_cardinality`: for a fixed week `w`, we collect all teams playing (in both slots of every match), and enforce that each team appears **exactly once**, using `[1 | t in T]` for both the minimum and maximum counts.
 
 > Alternative implementations using `count` and `sum` were tested, but this version with `global_cardinality` proved to be much more efficient in practice.
 
