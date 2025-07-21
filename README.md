@@ -7,10 +7,10 @@ Use `--platform linux/amd64` to replicate an `x86_64` environment.
 
 ```bash
 # If you are on an x86_64 machine:
-docker build -t cdmo .
+sudo docker build -t cdmo .
 
 # Build with x86_64 emulation (for ARM hosts)
-docker build --platform linux/amd64 -t cdmo .
+sudo docker build --platform linux/amd64 -t cdmo .
 ```
 
 ---
@@ -21,10 +21,10 @@ Again, if you’re on ARM, specify `--platform`:
 
 ```bash
 # Or, on native x86_64:
-docker run -it cdmo
+sudo docker run -it cdmo
 
 # Run with x86_64 emulation (for ARM hosts)
-docker run --platform linux/amd64 -it cdmo
+sudo docker run --platform linux/amd64 -it cdmo
 ```
 
 To close the container:
