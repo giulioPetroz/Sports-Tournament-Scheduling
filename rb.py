@@ -1,4 +1,15 @@
-n = 6
+import argparse
+
+parser = argparse.ArgumentParser(
+    prog="rb", description="Generates a round-robin tournament"
+)
+
+parser.add_argument("-t", "--teams", type=int, help="Number of teams", required=True)
+
+args = parser.parse_args()
+n = args.teams
+
+assert n % 2 == 0 and n >= 6
 
 teams = range(n)  # Team identifiers
 weeks = range(n - 1)  # Week identifiers
