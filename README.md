@@ -1,3 +1,28 @@
+# Sports Tournament Scheduling: A Unified Modeling Approach  
+**Course Project for the course Combinatorial Decision Making and Optimization 2024/2025**  
+*Master’s in Artificial Intelligence, University of Bologna (UniBo)*  
+
+This project explores the **Sports Tournament Scheduling (STS)** problem through four computational paradigms:  
+🔹 **Constraint Programming (CP)**  
+🔹 **Boolean Satisfiability (SAT)**  
+🔹 **Satisfiability Modulo Theories (SMT)**  
+🔹 **Mixed Integer Programming (MIP)**  
+
+## Problem Overview  
+Given `N` teams, we generate a **balanced round-robin tournament** where:  
+- Each team plays every other team exactly once over `N−1` weeks.  
+- Each week has `N/2` matches (one per period).  
+- The schedule minimizes **home/away imbalance** (i.e., the difference between home and away games per team).  
+- No team plays more than **twice in the same period**.  
+
+We precompute a round-robin matchup matrix using graph 1-factorization, then optimize period assignments and home/away slots within this structure.  
+
+## Implementation Details  
+- **CP**: MiniZinc (Gecode, Chuffed, OR-Tools)  
+- **SAT**: Python + Z3/CVC5 (CaDiCaL, MiniSat backends)  
+- **SMT**: `.smt2` files (Z3, CVC5)  
+- **MIP**: Python + PuLP (CBC, HiGHS, CPLEX, SCIP)  
+
 # Docker Instructions
 
 ## 1. Build the Docker image
